@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% load i18n %}{% block title %}{% translate "Add correction" %} | TNK Insight{% endblock %}{% block content %}
+<nav class="breadcrumb" aria-label="Breadcrumb"><a href="{% url 'reporting:detail' report.uuid %}">{{ report.village }}</a><span aria-hidden="true">›</span><a href="{% url 'reporting:amendment_detail' amendment.uuid %}">{% translate "Amendment" %} {{ amendment.amendment_number }}</a><span aria-hidden="true">›</span><span>{% translate "Add correction" %}</span></nav>
+<div class="page-heading"><div><h1>{% translate "Add an original and corrected value" %}</h1><p>{% translate "The system reads the original value directly from the official report. Optional indicator fields are for corrections that change published analytics." %}</p></div></div>
+<section class="app-card"><form method="post">{% csrf_token %}<div class="field-grid">{{ form.as_p }}</div><div class="form-actions"><button class="primary-button" type="submit">{% translate "Add correction" %}</button><a class="secondary-button" href="{% url 'reporting:amendment_detail' amendment.uuid %}">{% translate "Cancel" %}</a></div></form></section>
+{% endblock %}

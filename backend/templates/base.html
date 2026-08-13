@@ -1,0 +1,43 @@
+{% load i18n static %}{% get_current_language as CURRENT_LANGUAGE %}<!doctype html>
+<html lang="{{ CURRENT_LANGUAGE }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b4f4a">
+  <title>{% block title %}TNK Insight{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script defer src="{% static 'js/app.js' %}"></script>
+</head>
+<body class="app-body">
+<a class="skip-link" href="#main-content">{% translate "Skip to main content" %}</a>
+{% if user.is_authenticated %}
+<div class="app-shell">
+  <aside class="app-sidebar" aria-label="{% translate 'Main navigation' %}">
+    <a href="{% url 'core:dashboard' %}" class="brand"><span class="brand-mark" aria-hidden="true">TNK</span><span><strong>TNK Insight</strong><small>{% translate "Village reporting" %}</small></span></a>
+    <nav class="side-nav">
+      <a href="{% url 'core:dashboard' %}"{% if request.resolver_match.namespace == 'core' %} class="active" aria-current="page"{% endif %}><span aria-hidden="true">⌂</span>{% translate "Home" %}</a>
+      {% if can_view_detailed_reports %}<a href="{% url 'reporting:list' %}"{% if request.resolver_match.namespace == 'reporting' %} class="active" aria-current="page"{% endif %}><span aria-hidden="true">▤</span>{% translate "Reports" %}</a>{% endif %}
+      <a href="{% url 'analytics:dashboard' %}"{% if request.resolver_match.namespace == 'analytics' %} class="active" aria-current="page"{% endif %}><span aria-hidden="true">▥</span>{% translate "Analytics" %}</a>
+      {% if user.is_staff %}<a href="{% url 'admin:index' %}"><span aria-hidden="true">⚙</span>{% translate "Administration" %}</a>{% endif %}
+    </nav>
+    <div class="sidebar-help"><strong>{% translate "Need help?" %}</strong><p>{% translate "Complete one section at a time. Your saved records remain in the draft." %}</p></div>
+    <div class="user-panel"><span class="user-avatar" aria-hidden="true">{{ user.username|first|upper }}</span><span class="min-w-0"><strong>{{ user.get_full_name|default:user.username }}</strong><small>{% with assignment=user.role_assignments.first %}{% if assignment %}{{ assignment.role.name }}{% else %}{% translate "User" %}{% endif %}{% endwith %}</small></span></div>
+  </aside>
+  <div class="app-main">
+    <header class="mobile-header"><a href="{% url 'core:dashboard' %}" class="mobile-brand">TNK Insight</a><nav><a href="{% url 'core:dashboard' %}">{% translate "Home" %}</a>{% if can_view_detailed_reports %}<a href="{% url 'reporting:list' %}">{% translate "Reports" %}</a>{% endif %}<a href="{% url 'analytics:dashboard' %}">{% translate "Analytics" %}</a></nav></header>
+    <header class="topbar">
+      <div><p class="topbar-eyebrow">{% translate "Turaga ni Koro reporting portal" %}</p><p class="topbar-date">{% now "l, j F Y" %}</p></div>
+      <div class="topbar-actions">
+        <form action="{% url 'set_language' %}" method="post">{% csrf_token %}<input name="next" type="hidden" value="{{ request.get_full_path }}"><label for="language-switcher" class="sr-only">{% translate "Language" %}</label><select id="language-switcher" name="language" aria-label="{% translate 'Language' %}"><option value="en"{% if CURRENT_LANGUAGE == 'en' %} selected{% endif %}>English</option><option value="fj"{% if CURRENT_LANGUAGE == 'fj' %} selected{% endif %}>iTaukei</option></select></form>
+        <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="quiet-button">{% translate "Sign out" %}</button></form>
+      </div>
+    </header>
+    <main id="main-content" class="page-content" tabindex="-1">
+      {% if messages %}<div class="message-stack" role="status" aria-live="polite">{% for message in messages %}<div class="app-message {{ message.tags|default:'info' }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+{% else %}
+<main id="main-content" class="login-shell" tabindex="-1"><div class="login-brand"><span class="brand-mark">TNK</span><div><strong>TNK Insight</strong><p>{% translate "Secure village reporting and decision support" %}</p></div></div>
+{% endif %}
+{% block content %}{% endblock %}
+{% if user.is_authenticated %}</main></div></div>{% else %}</main>{% endif %}
+</body></html>

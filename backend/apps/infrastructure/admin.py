@@ -1,0 +1,4 @@
+from django.contrib import admin
+from .models import AssetMovement, EnergySnapshot, HousingSnapshot, SanitationSnapshot, VillageAsset, VillageEnergyAsset, VillageWaterSource, WasteCollectionActivity, WasteFacility, WaterInterruption, WaterMaintenanceActivity, WaterQualityTest
+from apps.core.admin import ProtectedReportLinkedAdmin
+admin.site.register((HousingSnapshot,VillageAsset,AssetMovement,VillageWaterSource,WaterInterruption,WaterQualityTest,WaterMaintenanceActivity,SanitationSnapshot,WasteFacility,WasteCollectionActivity,VillageEnergyAsset,EnergySnapshot), ProtectedReportLinkedAdmin)

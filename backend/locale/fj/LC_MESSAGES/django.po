@@ -1,0 +1,348 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: TNK Insight\n"
+"Language: fj\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Draft iTaukei interface translations pending formal government language review.
+msgid "Reports"
+msgstr "Ripote"
+
+msgid "Analytics"
+msgstr "Vakadikevi ni itukutuku"
+
+msgid "Language"
+msgstr "Vosa vakayagataki"
+
+msgid "Sign Out"
+msgstr "Sign Out"
+
+msgid "Sign In"
+msgstr "Sign In"
+
+msgid "Your username or password was not accepted."
+msgstr "E sega ni ciqomi na yaca ni vakayagataki se nomu password."
+
+msgid "Bula, %(name)s"
+msgstr "Bula Vinaka, %(name)s"
+
+msgid "Prepare and monitor quarterly Turaga ni Koro reports for your assigned locations."
+msgstr "Vakarautaka ka vakamuria na ripote ni Turaga ni Koro ena nomu koro."
+
+msgid "View Reports"
+msgstr "Raica na Ripote"
+
+msgid "TNK reports"
+msgstr "Ripote ni TNK"
+
+msgid "Reports visible within your assigned locations."
+msgstr "Na ripote e rawa ni raici ena vanua o lesi kina."
+
+msgid "New report"
+msgstr "Ripote Vou"
+
+msgid "Village"
+msgstr "Koro"
+
+msgid "Period"
+msgstr "Gauna ni Ripote"
+
+msgid "Status"
+msgstr "Kena ituvaki"
+
+msgid "Complete"
+msgstr "Sa Vakacavari Vinaka"
+
+msgid "No reports are available."
+msgstr "E sega ni tiko e dua na ripote."
+
+msgid "Edit"
+msgstr "Veisautaka"
+
+msgid "Add"
+msgstr "Vola Vou"
+
+msgid "Save record"
+msgstr "Maroroya na itukutuku"
+
+msgid "Cancel"
+msgstr "Bokoca"
+
+msgid "Back to %(section_name)s"
+msgstr "Lesu ki na %(section_name)s"
+
+msgid "Upload evidence"
+msgstr "Vakauta cake na ivakadinadina"
+
+msgid "Back to evidence"
+msgstr "Lesu ki na ivakadinadina"
+
+msgid "Allowed file types: PDF, JPG, JPEG, PNG, DOCX and XLSX. Maximum 10 MB."
+msgstr "Mataqali file e vakatarai: PDF, JPG, JPEG, PNG, DOCX kei na XLSX. Kena levu duadua e 10 MB."
+
+msgid "Upload securely"
+msgstr "Upload Cake"
+
+msgid "Enter quarterly information below. Each record saves independently."
+msgstr "Vola e ra na itukutuku ni vula tolu. E maroroi vakataki koya na itukutuku yadua."
+
+msgid "Section progress"
+msgstr "Toso ni Section"
+
+msgid "Mark the section complete only after checking all entries."
+msgstr "Vakatakilakilataka ni sa vakacavari vinaka na Section ni sa dikevi kece na itukutuku."
+
+msgid "Save section progress"
+msgstr "Maroroya na toso ni Section"
+
+msgid "records"
+msgstr "itukutuku"
+
+msgid "Record"
+msgstr "Itukutuku"
+
+msgid "No records have been entered."
+msgstr "E se sega ni volai e dua na itukutuku."
+
+msgid "This section uses confirmation and workflow controls rather than repeatable records."
+msgstr "Na iwasewase oqo e vakayagataka na vakadeitaki kei na iwalewale ni cakacaka."
+
+msgid "Sign Out"
+msgstr "Sign Out"
+
+msgid "Sign In"
+msgstr "Sign In"
+
+msgid "Back to reports"
+msgstr "Lesu ki na ripote"
+
+msgid "Back to report"
+msgstr "Lesu ki na ripote"
+
+msgid "Quality"
+msgstr "Vinaka ni itukutuku"
+
+msgid "Compared with"
+msgstr "Vakatauvatani kei na"
+
+msgid "Validation and workflow"
+msgstr "Vakadeitaki kei na iwalewale ni cakacaka"
+
+msgid "Validate first, then complete the actions available for your role."
+msgstr "Vakadeitaka taumada, qai vakacavara na cakacaka e vakarautaki me baleta na nomu itavi."
+
+msgid "Validate report"
+msgstr "Vakadeitaka na ripote"
+
+msgid "Unresolved validation issues"
+msgstr "Leqa ni vakadeitaki e se bera ni wali"
+
+msgid "I confirm the final declaration"
+msgstr "Au vakadeitaka na itukutuku ni iotioti"
+
+msgid "Save declaration"
+msgstr "Maroroya na vakadeitaki"
+
+msgid "Submit report"
+msgstr "Vakauta na ripote"
+
+msgid "Start Tikina review"
+msgstr "Tekivuna na dikevi ni Tikina"
+
+msgid "Forward to Province"
+msgstr "Vakauta ki na Yasana"
+
+msgid "Correction instructions"
+msgstr "Veidusimaki ni veivakadodonutaki"
+
+msgid "Return for correction"
+msgstr "Vakasuka me vakadodonutaki"
+
+msgid "Acknowledge"
+msgstr "Vakadinadinataka"
+
+msgid "Approve"
+msgstr "Vakadonua"
+
+msgid "Lock report"
+msgstr "Sogota na ripote"
+
+msgid "issue(s)"
+msgstr "leqa"
+
+msgid "Updated by"
+msgstr "Veisautaka o"
+
+msgid "This report section is read-only for your role or its current status."
+msgstr "E rawa wale ga ni wiliki na iwasewase oqo ena nomu itavi se kena ituvaki oqo."
+
+msgid "Evidence documents"
+msgstr "iVola ni ivakadinadina"
+
+msgid "Download"
+msgstr "Laveta sobu"
+
+msgid "No evidence uploaded."
+msgstr "E se sega ni vakau cake e dua na ivakadinadina."
+
+msgid "current records"
+msgstr "itukutuku ni gauna oqo"
+
+msgid "previous records"
+msgstr "itukutuku makawa"
+
+msgid "Previous approved-quarter entries"
+msgstr "Itukutuku ni vula tolu sa vakadonui oti"
+
+msgid "Create TNK report"
+msgstr "Tauyavutaka na ripote ni TNK"
+
+msgid "Choose an assigned village and an open reporting period. The previous approved report will be linked automatically."
+msgstr "Digitaka na koro o lesi kina kei na gauna ni ripote e dola. Ena semati vakataki koya na ripote sa vakadonui oti."
+
+msgid "Create draft"
+msgstr "Vola e dua na Draft"
+
+msgid "Skip to main content"
+msgstr "Lako ki na main content"
+
+msgid "Main Navigation"
+msgstr "Main Navigation"
+
+msgid "Village reporting"
+msgstr "Ripote ni koro"
+
+msgid "Home"
+msgstr "Home"
+
+msgid "Administration"
+msgstr "Veiliutaki"
+
+msgid "Need help?"
+msgstr "Gadreva na veivuke?"
+
+msgid "Your workspace"
+msgstr "Nomu vanua ni cakacaka"
+
+msgid "Continue your quarterly reporting work or review information within your assigned locations."
+msgstr "Tomana na nomu ripote ni vula tolu se dikeva na itukutuku ena vanua o lesi kina."
+
+msgid "Create report"
+msgstr "Tauyavutaka na ripote"
+
+msgid "Reports in scope"
+msgstr "Ripote ena nomu vanua"
+
+msgid "Drafts to complete"
+msgstr "Ripote taumada me vakacavari"
+
+msgid "Awaiting review"
+msgstr "Waraka na dikevi"
+
+msgid "Approved"
+msgstr "Vakadonui"
+
+msgid "Recent reports"
+msgstr "Ripote vou eso"
+
+msgid "View all"
+msgstr "Raica kece"
+
+msgid "Open"
+msgstr "Dolava"
+
+msgid "Quick guide"
+msgstr "Veidusimaki lekaleka"
+
+msgid "No reports yet"
+msgstr "E se sega na ripote"
+
+msgid "Create first report"
+msgstr "Tauyavutaka na imatai ni ripote"
+
+msgid "Quarterly reporting"
+msgstr "Ripote ni vula tolu"
+
+msgid "Completion"
+msgstr "Kena vakacavari"
+
+msgid "Data quality"
+msgstr "Vinaka ni itukutuku"
+
+msgid "Continue"
+msgstr "Tomana"
+
+msgid "View"
+msgstr "Raica"
+
+msgid "Start a quarterly report"
+msgstr "Tekivuna na ripote ni vula tolu"
+
+msgid "Create draft report"
+msgstr "Tauyavutaka na ripote taumada"
+
+msgid "Required fields are marked with an asterisk. You can return and edit this record while the report is a draft."
+msgstr "Na vanua e gadrevi e vakatakilakilataki ena kalokalo. E rawa ni o lesu ka veisautaka ni se ripote taumada."
+
+msgid "Please correct the errors below"
+msgstr "Yalovinaka vakadodonutaka na cala e ra"
+
+msgid "Welcome back"
+msgstr "Ni sa lesu tale mai"
+
+msgid "Sign in securely"
+msgstr "Curu vakataqomaki"
+
+msgid "Validation and submission"
+msgstr "Vakadeitaki kei na vakau ni ripote"
+
+msgid "Continue data entry"
+msgstr "Tomana na volai ni itukutuku"
+
+msgid "Report sections"
+msgstr "Iwasewase ni ripote"
+
+msgid "Add record"
+msgstr "Vola e dua na tukutuku vou"
+
+msgid "Read only"
+msgstr "Wiliki wale ga"
+
+msgid "Add the first record"
+msgstr "Vakuria na imatai ni itukutuku"
+
+msgid "Upload supporting evidence"
+msgstr "Vakauta cake na ivakadinadina veitokoni"
+
+msgid "Decision support"
+msgstr "Veitokoni ni vakatulewa"
+
+msgid "Reports overview"
+msgstr "Raici raraba ni ripote"
+
+msgid "Filter dashboard"
+msgstr "Vakatautauvatataka na papa ni itukutuku"
+
+msgid "Apply filters"
+msgstr "Vakayagataka na vakatautauvatataki"
+
+msgid "Clear"
+msgstr "Vagalalataka"
+
+msgid "Reports by status"
+msgstr "Ripote me vaka na kena ituvaki"
+
+msgid "Village locations"
+msgstr "Vanua ni koro"
+
+msgid "Progress is calculated automatically from saved record groups. Mark the section complete after checking all applicable information."
+msgstr "E cakacakataki vakataki koya na toso mai na itukutuku sa maroroi. Vakatakilakilataka ni sa vakacavari ni o sa dikeva kece na itukutuku e ganita."
+
+msgid "calculated automatically"
+msgstr "cakacakataki vakataki koya"
+
+msgid "Save section status"
+msgstr "Maroroya na ituvaki ni iwasewase"

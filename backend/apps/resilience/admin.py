@@ -1,0 +1,4 @@
+from django.contrib import admin
+from .models import ClimateImpactObservation, ClimateResponseAction, DisasterIncident, EvacuationCentre, VillageDisasterPreparedness
+from apps.core.admin import ProtectedReportLinkedAdmin
+admin.site.register((ClimateImpactObservation,ClimateResponseAction,VillageDisasterPreparedness,EvacuationCentre,DisasterIncident), ProtectedReportLinkedAdmin)

@@ -1,0 +1,59 @@
+from django.db import models
+from django.core.exceptions import ValidationError
+from apps.core.models import AnalyticalRecord, UUIDTimeStampedModel
+from apps.core.validation import validate_non_negative, validate_subcounts
+
+class HousingSnapshot(AnalyticalRecord):
+    report=models.ForeignKey("reporting.TNKReport",on_delete=models.PROTECT,related_name="housing_snapshots"); structure_type=models.CharField(max_length=80); construction_material=models.CharField(max_length=80); condition=models.CharField(max_length=30,choices=((x,x.replace("_"," ").title()) for x in ("good","fair","poor","unsafe","destroyed","under_construction"))); occupancy_status=models.CharField(max_length=40); count=models.PositiveIntegerField(null=True,blank=True)
+class VillageAsset(UUIDTimeStampedModel):
+    village=models.ForeignKey("locations.Village",on_delete=models.PROTECT,related_name="assets"); asset_code=models.CharField(max_length=50); asset_type=models.CharField(max_length=80); asset_name=models.CharField(max_length=160); quantity=models.PositiveIntegerField(); acquisition_date=models.DateField(null=True,blank=True); acquisition_cost=models.DecimalField(max_digits=14,decimal_places=2,null=True,blank=True); currency_code=models.CharField(max_length=3,default="FJD"); estimated_current_value=models.DecimalField(max_digits=14,decimal_places=2,null=True,blank=True); funding_source=models.CharField(max_length=160,blank=True); custodian=models.CharField(max_length=160,blank=True); location_description=models.CharField(max_length=255,blank=True); latitude=models.DecimalField(max_digits=9,decimal_places=6,null=True,blank=True); longitude=models.DecimalField(max_digits=9,decimal_places=6,null=True,blank=True); condition=models.CharField(max_length=30); operational_status=models.CharField(max_length=30); last_maintenance_date=models.DateField(null=True,blank=True); next_maintenance_date=models.DateField(null=True,blank=True); is_active=models.BooleanField(default=True)
+    class Meta: constraints=[models.UniqueConstraint(fields=("village","asset_code"),name="unique_village_asset_code")]
+    def clean(self):
+        validate_non_negative(acquisition_cost=self.acquisition_cost, estimated_current_value=self.estimated_current_value)
+class AssetMovement(UUIDTimeStampedModel):
+    asset=models.ForeignKey(VillageAsset,on_delete=models.PROTECT,related_name="movements"); movement_type=models.CharField(max_length=40); movement_date=models.DateField(); old_quantity=models.PositiveIntegerField(null=True,blank=True); new_quantity=models.PositiveIntegerField(null=True,blank=True); old_condition=models.CharField(max_length=30,blank=True); new_condition=models.CharField(max_length=30,blank=True); reason=models.TextField(); cost=models.DecimalField(max_digits=14,decimal_places=2,null=True,blank=True); evidence_document=models.FileField(upload_to="assets/%Y/%m/",null=True,blank=True)
+class VillageWaterSource(UUIDTimeStampedModel):
+    village=models.ForeignKey("locations.Village",on_delete=models.PROTECT,related_name="water_sources"); source_type=models.CharField(max_length=80); source_name=models.CharField(max_length=160); latitude=models.DecimalField(max_digits=9,decimal_places=6,null=True,blank=True); longitude=models.DecimalField(max_digits=9,decimal_places=6,null=True,blank=True); ownership=models.CharField(max_length=80,blank=True); operational_status=models.CharField(max_length=30); capacity_litres=models.DecimalField(max_digits=14,decimal_places=2,null=True,blank=True); households_served=models.PositiveIntegerField(null=True,blank=True); people_served=models.PositiveIntegerField(null=True,blank=True); availability_status=models.CharField(max_length=40); average_days_unavailable_per_month=models.DecimalField(max_digits=5,decimal_places=2,null=True,blank=True); water_quality_status=models.CharField(max_length=40); last_water_test_date=models.DateField(null=True,blank=True); last_maintenance_date=models.DateField(null=True,blank=True); condition=models.CharField(max_length=30); primary_or_backup=models.CharField(max_length=20); is_active=models.BooleanField(default=True)
+    def clean(self):
+        validate_non_negative(capacity_litres=self.capacity_litres, average_days_unavailable_per_month=self.average_days_unavailable_per_month)
+        if self.average_days_unavailable_per_month is not None and self.average_days_unavailable_per_month > 31:
+            raise ValidationError({"average_days_unavailable_per_month": "Days unavailable per month cannot exceed 31."})
+class WaterInterruption(UUIDTimeStampedModel):
+    water_source=models.ForeignKey(VillageWaterSource,on_delete=models.PROTECT,related_name="interruptions"); report=models.ForeignKey("reporting.TNKReport",on_delete=models.PROTECT,related_name="water_interruptions"); start_date=models.DateTimeField(); restored_date=models.DateTimeField(null=True,blank=True); cause=models.TextField(); households_affected=models.PositiveIntegerField(null=True,blank=True); people_affected=models.PositiveIntegerField(null=True,blank=True); duration_hours=models.DecimalField(max_digits=10,decimal_places=2,null=True,blank=True); responsible_agency=models.CharField(max_length=160,blank=True); action_taken=models.TextField(blank=True); resolution_status=models.CharField(max_length=30)
+    def clean(self):
+        if self.restored_date and self.restored_date < self.start_date: raise ValidationError({"restored_date":"Restoration cannot precede the interruption."})
+        validate_non_negative(duration_hours=self.duration_hours)
+        if self.restored_date and self.duration_hours is not None:
+            actual_hours = (self.restored_date - self.start_date).total_seconds() / 3600
+            if abs(float(self.duration_hours) - actual_hours) > 0.02:
+                raise ValidationError({"duration_hours": f"Duration must match the outage dates ({actual_hours:.2f} hours)."})
+class WaterQualityTest(UUIDTimeStampedModel):
+    water_source=models.ForeignKey(VillageWaterSource,on_delete=models.PROTECT,related_name="quality_tests"); test_date=models.DateField(); tested_by=models.CharField(max_length=160); test_type=models.CharField(max_length=100); result=models.TextField(); safe_for_drinking=models.BooleanField(null=True,blank=True); corrective_action=models.TextField(blank=True); evidence_document=models.FileField(upload_to="water/tests/%Y/%m/",null=True,blank=True)
+class WaterMaintenanceActivity(UUIDTimeStampedModel):
+    water_source=models.ForeignKey(VillageWaterSource,on_delete=models.PROTECT,related_name="maintenance"); report=models.ForeignKey("reporting.TNKReport",on_delete=models.PROTECT,related_name="water_maintenance"); activity_date=models.DateField(); activity_type=models.CharField(max_length=80); problem=models.TextField(blank=True); action_taken=models.TextField(); responsible_organisation=models.CharField(max_length=160,blank=True); cost=models.DecimalField(max_digits=14,decimal_places=2,null=True,blank=True); completion_status=models.CharField(max_length=30)
+    def clean(self): validate_non_negative(cost=self.cost)
+class SanitationSnapshot(AnalyticalRecord):
+    report=models.ForeignKey("reporting.TNKReport",on_delete=models.PROTECT,related_name="sanitation_snapshots"); toilet_type=models.CharField(max_length=80); functional_count=models.PositiveIntegerField(null=True,blank=True); non_functional_count=models.PositiveIntegerField(null=True,blank=True); shared_count=models.PositiveIntegerField(null=True,blank=True); private_count=models.PositiveIntegerField(null=True,blank=True); safely_managed_count=models.PositiveIntegerField(null=True,blank=True); flood_vulnerable_count=models.PositiveIntegerField(null=True,blank=True)
+    def clean(self):
+        total = (self.functional_count or 0) + (self.non_functional_count or 0)
+        validate_subcounts(total, shared_count=self.shared_count, private_count=self.private_count, safely_managed_count=self.safely_managed_count, flood_vulnerable_count=self.flood_vulnerable_count)
+class WasteFacility(UUIDTimeStampedModel):
+    village=models.ForeignKey("locations.Village",on_delete=models.PROTECT,related_name="waste_facilities"); facility_type=models.CharField(max_length=80); latitude=models.DecimalField(max_digits=9,decimal_places=6,null=True,blank=True); longitude=models.DecimalField(max_digits=9,decimal_places=6,null=True,blank=True); operational_status=models.CharField(max_length=30); collection_frequency=models.CharField(max_length=60,blank=True); households_served=models.PositiveIntegerField(null=True,blank=True); responsible_group=models.CharField(max_length=160,blank=True); environmental_risk=models.CharField(max_length=30); last_inspection_date=models.DateField(null=True,blank=True); is_active=models.BooleanField(default=True)
+class WasteCollectionActivity(UUIDTimeStampedModel):
+    facility=models.ForeignKey(WasteFacility,on_delete=models.PROTECT,related_name="collections"); report=models.ForeignKey("reporting.TNKReport",on_delete=models.PROTECT,related_name="waste_collections"); collection_date=models.DateField(); waste_type=models.CharField(max_length=80); estimated_volume=models.DecimalField(max_digits=12,decimal_places=2,null=True,blank=True); measurement_unit=models.CharField(max_length=30); collected_by=models.CharField(max_length=160); disposal_method=models.CharField(max_length=120)
+    def clean(self): validate_non_negative(estimated_volume=self.estimated_volume)
+class VillageEnergyAsset(UUIDTimeStampedModel):
+    village=models.ForeignKey("locations.Village",on_delete=models.PROTECT,related_name="energy_assets"); asset_type=models.CharField(max_length=80); capacity=models.DecimalField(max_digits=14,decimal_places=2,null=True,blank=True); capacity_unit=models.CharField(max_length=30,blank=True); installation_date=models.DateField(null=True,blank=True); households_served=models.PositiveIntegerField(null=True,blank=True); ownership=models.CharField(max_length=80,blank=True); condition=models.CharField(max_length=30); operational_status=models.CharField(max_length=30); fuel_or_energy_type=models.CharField(max_length=80); maintenance_provider=models.CharField(max_length=160,blank=True); is_active=models.BooleanField(default=True)
+    def clean(self): validate_non_negative(capacity=self.capacity)
+class EnergySnapshot(AnalyticalRecord):
+    report=models.ForeignKey("reporting.TNKReport",on_delete=models.PROTECT,related_name="energy_snapshots"); energy_source=models.CharField(max_length=80); households_connected=models.PositiveIntegerField(null=True,blank=True); households_with_working_supply=models.PositiveIntegerField(null=True,blank=True); average_hours_available_per_day=models.DecimalField(max_digits=5,decimal_places=2,null=True,blank=True); average_days_unavailable_per_month=models.DecimalField(max_digits=5,decimal_places=2,null=True,blank=True); primary_or_backup=models.CharField(max_length=20); estimated_monthly_cost=models.DecimalField(max_digits=14,decimal_places=2,null=True,blank=True); currency_code=models.CharField(max_length=3,default="FJD")
+    def clean(self):
+        validate_subcounts(self.households_connected, households_with_working_supply=self.households_with_working_supply)
+        validate_non_negative(average_hours_available_per_day=self.average_hours_available_per_day, average_days_unavailable_per_month=self.average_days_unavailable_per_month, estimated_monthly_cost=self.estimated_monthly_cost)
+        errors = {}
+        if self.average_hours_available_per_day is not None and self.average_hours_available_per_day > 24:
+            errors["average_hours_available_per_day"] = "Hours available per day cannot exceed 24."
+        if self.average_days_unavailable_per_month is not None and self.average_days_unavailable_per_month > 31:
+            errors["average_days_unavailable_per_month"] = "Days unavailable per month cannot exceed 31."
+        if errors:
+            raise ValidationError(errors)

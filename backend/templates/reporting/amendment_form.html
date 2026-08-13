@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% load i18n %}{% block title %}{% translate "Request amendment" %} | TNK Insight{% endblock %}{% block content %}
+<nav class="breadcrumb" aria-label="Breadcrumb"><a href="{% url 'reporting:detail' report.uuid %}">{{ report.village }}</a><span aria-hidden="true">›</span><a href="{% url 'reporting:amendment_list' report.uuid %}">{% translate "Amendments" %}</a><span aria-hidden="true">›</span><span>{% translate "New request" %}</span></nav>
+<div class="page-heading"><div><p class="eyebrow">{{ report.reporting_period }}</p><h1>{% translate "Request an official correction" %}</h1><p>{% translate "This starts a review request; it does not unlock or rewrite the approved report." %}</p></div></div>
+<section class="app-card"><form method="post">{% csrf_token %}<div class="field-grid">{{ form.as_p }}</div><div class="form-actions"><button class="primary-button" type="submit">{% translate "Create amendment request" %}</button><a class="secondary-button" href="{% url 'reporting:amendment_list' report.uuid %}">{% translate "Cancel" %}</a></div></form></section>
+{% endblock %}
