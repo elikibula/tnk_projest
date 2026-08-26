@@ -9,6 +9,13 @@ REPORT_AUTHOR_ROLE_CODES = {
 
 DETAILED_REPORT_ROLE_CODES = set(Role.Codes.values) - {Role.Codes.READ_ONLY_ANALYST}
 
+PHOTO_REPORT_ROLE_CODES = {
+    Role.Codes.ROKO_VEIVUKE,
+    Role.Codes.ROKO_TUI,
+    Role.Codes.PROVINCIAL_ADMIN,
+    Role.Codes.SYSTEM_ADMIN,
+}
+
 
 def user_has_any_role(user, role_codes: Iterable[str]) -> bool:
     if not user.is_authenticated:

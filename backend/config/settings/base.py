@@ -11,7 +11,7 @@ INSTALLED_APPS = [
     "django.contrib.admin", "django.contrib.auth", "django.contrib.contenttypes",
     "django.contrib.sessions", "django.contrib.messages", "django.contrib.staticfiles",
     "rest_framework", "drf_spectacular", "rest_framework_simplejwt.token_blacklist",
-    "apps.core", "apps.locations", "apps.accounts", "apps.audit", "apps.reporting",
+    "apps.core", "apps.locations", "apps.accounts", "apps.audit", "apps.reporting", "apps.administration",
     "apps.governance", "apps.population",
     "apps.infrastructure", "apps.wellbeing", "apps.economy", "apps.projects", "apps.resilience", "apps.culture",
     "apps.documents", "apps.data_quality", "apps.workflow", "apps.analytics", "apps.mobile_api",

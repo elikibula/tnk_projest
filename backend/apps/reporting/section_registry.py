@@ -18,6 +18,7 @@ class EntryConfig:
     label: str
     model: type[models.Model]
     fields: tuple[str, ...]
+    data_type: str
     allow_create: bool = True
     allow_delete: bool = True
 
@@ -26,13 +27,52 @@ class EntryConfig:
         from .itaukei import localize_text
         return localize_text(self.label)
 
+    @property
+    def supports_photos(self):
+        from apps.documents.photos import PHOTO_SECTIONS
+        return any(self in SECTION_ENTRIES.get(section, ()) for section in PHOTO_SECTIONS)
 
-def entry(key, label, model, fields, **kwargs):
-    return EntryConfig(key, label, model, tuple(fields.split()), **kwargs)
+
+DATA_TYPE_LABELS = {
+    "master": "Master / Base data",
+    "operational": "Operational / Event data",
+    "snapshot": "Snapshot data",
+    "workflow": "Evidence / Workflow / Derived data",
+}
+
+
+MASTER_MODELS = {
+    Village, PersonReference, OfficialAppointment, VillageCommittee, Household,
+    VillageAsset, VillageWaterSource, WasteFacility, VillageEnergyAsset,
+    VillageBusiness, VillageFinancialAccount, IVDPProject, ProjectMilestone,
+    ProjectRisk, VillageDisasterPreparedness, EvacuationCentre, TraditionalUnit,
+    TraditionalTitle, CulturalKnowledgeRecord,
+}
+SNAPSHOT_MODELS = {
+    PopulationSnapshot, HousingSnapshot, SanitationSnapshot, EnergySnapshot,
+    HealthConditionSnapshot, VillageHealthAccessSnapshot, DisabilitySnapshot,
+    CropProductionSnapshot, FoodSecuritySnapshot, VillageFinancialSnapshot,
+}
+
+
+def entry(key, label, model, fields, data_type=None, **kwargs):
+    if data_type is None:
+        data_type = "master" if model in MASTER_MODELS else "snapshot" if model in SNAPSHOT_MODELS else "operational"
+    return EntryConfig(key, label, model, tuple(fields.split()), data_type, **kwargs)
+
+
+def section_data_types(section_code):
+    """Return ordered, presentation-ready data classifications for a card."""
+    if section_code in {"evidence_declarations", "validation_submission"}:
+        keys = ("workflow",)
+    else:
+        present = {config.data_type for config in SECTION_ENTRIES.get(section_code, ())}
+        keys = tuple(key for key in DATA_TYPE_LABELS if key in present)
+    return tuple({"key": key, "label": DATA_TYPE_LABELS[key]} for key in keys)
 
 
 SECTION_ENTRIES = {
-    "village_profile": [entry("village", "Village profile", Village, "name_en name_fj island_name latitude longitude postal_address contact_phone contact_email", allow_create=False, allow_delete=False)],
+    "village_profile": [entry("village", "Village profile", Village, "name_en name_fj island_name latitude longitude postal_address contact_phone contact_email", "master", allow_create=False, allow_delete=False)],
     "leadership_governance": [
         entry("person", "Personal Information", PersonReference, "full_name gender date_of_birth phone email confidentiality_level is_active"),
         entry("appointment", "Official appointment", OfficialAppointment, "person role appointment_date effective_from effective_to confirmation_status appointment_reference is_current change_reason"),

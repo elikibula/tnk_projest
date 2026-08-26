@@ -182,7 +182,7 @@ class VillageListView(generics.ListAPIView):
     serializer_class = VillageSerializer
 
     def get_queryset(self):
-        return villages_for_user(self.request.user).select_related("tikina__province")
+        return villages_for_user(self.request.user).filter(is_active=True, tikina__is_active=True, tikina__province__is_active=True).select_related("tikina__province")
 
 
 class ReportingPeriodListView(generics.ListAPIView):
@@ -220,7 +220,12 @@ class BootstrapView(APIView):
         user = request.user
         device = MobileDevice.objects.get(uuid=request.auth["device_uuid"], user=user)
         reports = reports_for_user(user).select_related("village", "reporting_period", "previous_report").prefetch_related("section_statuses")
-        villages = villages_for_user(user).select_related("tikina__province")
+        # Keep inactive locations referenced by existing reports so offline history
+        # still resolves, but do not offer unrelated inactive locations as choices.
+        villages = villages_for_user(user).filter(
+            models.Q(is_active=True, tikina__is_active=True, tikina__province__is_active=True)
+            | models.Q(pk__in=reports.values("village_id"))
+        ).select_related("tikina__province")
         section_codes = permitted_section_codes(user)
         section_definitions = [
             {

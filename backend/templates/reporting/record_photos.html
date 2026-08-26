@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% load i18n static %}
+{% block title %}{% translate "Photo evidence" %} | TNK Insight{% endblock %}
+{% block content %}
+<nav class="breadcrumb" aria-label="Breadcrumb"><a href="{% url 'reporting:detail' report.uuid %}">{{ report.village }}</a><span>›</span><a href="{% url 'reporting:section_update' report.uuid section_code %}">{{ config.display_label }}</a><span>›</span><span>{% translate "Photo evidence" %}</span></nav>
+<div class="page-heading"><div><p class="eyebrow">{{ report.reporting_period }} · {{ config.display_label }}</p><h1>{% translate "Photo evidence" %}</h1><p>{{ summary }}</p></div></div>
+<p class="app-message info">{% translate "Photos support this record only. They do not verify reported quantities or mark work complete." %}</p>
+<section aria-label="{% translate 'Photo gallery' %}" class="photo-gallery">
+{% for photo in photos %}<figure class="app-card photo-tile">
+  <a href="{% url 'documents:photo_preview' photo.document.uuid %}?full=1" target="_blank" rel="noopener"><img src="{% url 'documents:photo_preview' photo.document.uuid %}" alt="{{ photo.document.title }}" loading="lazy" width="420" height="300"></a>
+  <figcaption><span class="status-badge">{{ photo.get_stage_display }}</span><h2>{{ photo.document.title }}</h2><p>{{ photo.document.captured_at|date:"j M Y, H:i" }}</p><p>{{ photo.document.get_confidentiality_level_display }}</p>{% if photo.document.latitude != None %}<p>GPS: {{ photo.document.latitude }}, {{ photo.document.longitude }}{% if photo.document.location_accuracy_metres != None %} (±{{ photo.document.location_accuracy_metres }} m){% endif %}</p>{% endif %}<a href="{% url 'documents:download' photo.document.uuid %}">{% translate "Download original" %}</a></figcaption>
+</figure>{% empty %}<div class="app-card empty-state"><h2>{% translate "No photos available" %}</h2><p>{% translate "Photos you have permission to view will appear here." %}</p></div>{% endfor %}
+</section>
+{% if can_edit %}
+<form method="post" enctype="multipart/form-data" class="app-card form-card" id="record-photo-form">
+{% csrf_token %}<h2>{% translate "Add photo evidence" %}</h2><p>{% translate "JPG, JPEG or PNG. Up to 10 photos per upload, each within the configured file size limit (10 MB by default). Give each photo its own caption and capture date. GPS is optional; capture it only when you are at the photographed location." %}</p><p>{% translate "Only upload photos you have permission to share. Original files may contain embedded location metadata; remove it before uploading if sensitive." %}</p>
+{{ formset.management_form }}{{ formset.non_form_errors }}
+<div id="photo-forms">{% for form in formset %}{% include "reporting/_photo_fields.html" %}{% endfor %}</div>
+<template id="empty-photo-form">{% include "reporting/_photo_fields.html" with form=formset.empty_form %}</template>
+<div class="form-actions"><button type="button" class="secondary-button" id="add-photo">{% translate "Add another photo" %}</button><button type="submit" class="primary-button">{% translate "Save photos securely" %}</button></div>
+</form>
+<script defer src="{% static 'js/record_photos.js' %}"></script>
+{% else %}<p class="app-message warning">{% translate "Photo evidence is read only for your role or this report's status." %}</p>{% endif %}
+{% endblock %}

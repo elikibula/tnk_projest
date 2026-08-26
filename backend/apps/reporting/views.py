@@ -34,7 +34,7 @@ from apps.workflow.services import transition_report
 from apps.workflow.services import available_actions
 from apps.data_quality.services import validate_report
 from .section_entries import entry_queryset, entry_rows, save_entry
-from .section_registry import SECTION_ENTRIES, get_entry_config
+from .section_registry import SECTION_ENTRIES, get_entry_config, section_data_types
 from apps.accounts.permissions import REPORT_AUTHOR_ROLE_CODES, user_has_any_role
 from apps.core.security import can_view_document, can_view_entry, can_view_report, can_view_section, permitted_section_codes
 from apps.documents.models import EvidenceDocument, EvidenceLink
@@ -74,9 +74,12 @@ class ReportDetailView(ScopedReportMixin, View):
     def get(self, request, report_uuid):
         report = self.get_report()
         allowed_sections = permitted_section_codes(request.user)
+        sections = list(report.section_statuses.filter(section_code__in=allowed_sections).select_related("last_updated_by"))
+        for section in sections:
+            section.data_types = section_data_types(section.section_code)
         return render(request, "reporting/report_detail.html", {
             "report": report,
-            "sections": report.section_statuses.filter(section_code__in=allowed_sections).select_related("last_updated_by"),
+            "sections": sections,
             "workflow_actions": available_actions(report, request.user),
             "quality_issues": report.quality_issues.filter(resolved=False, section__in=allowed_sections).select_related("rule")[:50],
             "can_validate": report.is_editable and user_has_any_role(request.user, REPORT_AUTHOR_ROLE_CODES),

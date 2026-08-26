@@ -1,9 +1,14 @@
 from django.urls import path
 
 from . import views
+from .photo_views import record_photos
+from .photo_reports import photo_report_list, photo_report_detail
 
 app_name = "reporting"
 urlpatterns = [
+    path("photos/", photo_report_list, name="photo_report_list"),
+    path("<uuid:report_uuid>/photos/", photo_report_detail, name="photo_report_detail"),
+    path("<uuid:report_uuid>/sections/<slug:section_code>/<slug:entry_key>/<str:object_id>/photos/", record_photos, name="record_photos"),
     path("", views.report_list, name="list"),
     path("new/", views.report_create, name="create"),
     path("<uuid:report_uuid>/", views.ReportDetailView.as_view(), name="detail"),

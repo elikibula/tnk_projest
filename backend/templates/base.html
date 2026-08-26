@@ -17,15 +17,16 @@
     <a href="{% url 'core:dashboard' %}" class="brand"><span class="brand-mark" aria-hidden="true">TNK</span><span><strong>TNK Insight</strong><small>{% translate "Village reporting" %}</small></span></a>
     <nav class="side-nav">
       <a href="{% url 'core:dashboard' %}"{% if request.resolver_match.namespace == 'core' %} class="active" aria-current="page"{% endif %}><span aria-hidden="true">⌂</span>{% translate "Home" %}</a>
-      {% if can_view_detailed_reports %}<a href="{% url 'reporting:list' %}"{% if request.resolver_match.namespace == 'reporting' %} class="active" aria-current="page"{% endif %}><span aria-hidden="true">▤</span>{% translate "Reports" %}</a>{% endif %}
+      {% if can_view_detailed_reports %}<a href="{% url 'reporting:list' %}"{% if request.resolver_match.namespace == 'reporting' and request.resolver_match.url_name != 'photo_report_list' and request.resolver_match.url_name != 'photo_report_detail' %} class="active" aria-current="page"{% endif %}><span aria-hidden="true">▤</span>{% translate "Reports" %}</a>{% endif %}
+      {% if can_view_photo_reports %}<a href="{% url 'reporting:photo_report_list' %}"{% if request.resolver_match.url_name == 'photo_report_list' or request.resolver_match.url_name == 'photo_report_detail' %} class="active" aria-current="page"{% endif %}><span aria-hidden="true">▧</span>{% translate "Photo Reports" %}</a>{% endif %}
       <a href="{% url 'analytics:dashboard' %}"{% if request.resolver_match.namespace == 'analytics' %} class="active" aria-current="page"{% endif %}><span aria-hidden="true">▥</span>{% translate "Analytics" %}</a>
-      {% if user.is_staff %}<a href="{% url 'admin:index' %}"><span aria-hidden="true">⚙</span>{% translate "Administration" %}</a>{% endif %}
+      {% if can_access_administration %}<a href="{% url 'administration:dashboard' %}"{% if request.resolver_match.namespace == 'administration' %} class="active" aria-current="page"{% endif %}><span aria-hidden="true">⚙</span>{% translate "Administration" %}</a>{% endif %}
     </nav>
     <div class="sidebar-help"><strong>{% translate "Need help?" %}</strong><p>{% translate "Complete one section at a time. Your saved records remain in the draft." %}</p></div>
     <div class="user-panel"><span class="user-avatar" aria-hidden="true">{{ user.username|first|upper }}</span><span class="min-w-0"><strong>{{ user.get_full_name|default:user.username }}</strong><small>{% with assignment=user.role_assignments.first %}{% if assignment %}{{ assignment.role.name }}{% else %}{% translate "User" %}{% endif %}{% endwith %}</small></span></div>
   </aside>
   <div class="app-main">
-    <header class="mobile-header"><a href="{% url 'core:dashboard' %}" class="mobile-brand">TNK Insight</a><nav><a href="{% url 'core:dashboard' %}">{% translate "Home" %}</a>{% if can_view_detailed_reports %}<a href="{% url 'reporting:list' %}">{% translate "Reports" %}</a>{% endif %}<a href="{% url 'analytics:dashboard' %}">{% translate "Analytics" %}</a></nav></header>
+    <header class="mobile-header"><a href="{% url 'core:dashboard' %}" class="mobile-brand">TNK Insight</a><nav><a href="{% url 'core:dashboard' %}">{% translate "Home" %}</a>{% if can_view_detailed_reports %}<a href="{% url 'reporting:list' %}">{% translate "Reports" %}</a>{% endif %}{% if can_view_photo_reports %}<a href="{% url 'reporting:photo_report_list' %}">{% translate "Photo Reports" %}</a>{% endif %}<a href="{% url 'analytics:dashboard' %}">{% translate "Analytics" %}</a>{% if can_access_administration %}<a href="{% url 'administration:dashboard' %}">{% translate "Administration" %}</a>{% endif %}</nav></header>
     <header class="topbar">
       <div><p class="topbar-eyebrow">{% translate "Turaga ni Koro reporting portal" %}</p><p class="topbar-date">{% now "l, j F Y" %}</p></div>
       <div class="topbar-actions">

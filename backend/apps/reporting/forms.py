@@ -4,6 +4,7 @@ from django import forms
 from django.forms import modelform_factory
 from apps.documents.models import EvidenceDocument
 from .itaukei import localize_form
+from .form_choices import controlled_choices
 
 from apps.accounts.permissions import REPORT_AUTHOR_ROLE_CODES, user_has_any_role
 from apps.accounts.selectors import villages_for_user
@@ -66,6 +67,19 @@ def build_entry_form(config, *, report, data=None, files=None, instance=None):
         if field_name in form.fields and hasattr(form.fields[field_name], "queryset"):
             form.fields[field_name].queryset = form.fields[field_name].queryset.filter(**{lookup: value})
     for field_name, field in form.fields.items():
+        choices = controlled_choices(config.model, field_name)
+        if choices and not isinstance(field, forms.ModelChoiceField):
+            current_value = getattr(instance, field_name, None) if instance is not None else None
+            choices = list(choices)
+            if current_value not in (None, "") and current_value not in {value for value, _label in choices}:
+                choices.append((current_value, f"Previously entered: {current_value}"))
+            form.fields[field_name] = forms.ChoiceField(
+                label=field.label,
+                required=field.required,
+                help_text=field.help_text,
+                choices=(("", "Select an option") , *choices) if not field.required else choices,
+            )
+            field = form.fields[field_name]
         if field_name.endswith("count") or field_name in {"count", "quantity", "households_served", "people_served"}:
             field.help_text = "Use 0 only for a confirmed none. Leave blank when the value was not answered."
         elif field_name == "verification_status":
@@ -94,6 +108,10 @@ class EvidenceUploadForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["document_type"] = forms.ChoiceField(
+            label=self.fields["document_type"].label,
+            choices=controlled_choices(EvidenceDocument, "document_type"),
+        )
         localize_form(self)
 
 

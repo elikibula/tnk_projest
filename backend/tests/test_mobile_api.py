@@ -68,6 +68,22 @@ class MobileApiTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {response.data['access']}")
         return response
 
+    def test_inactive_location_choices_excluded_but_report_history_kept(self):
+        self.login()
+        Village.objects.filter(pk=self.village.pk).update(is_active=False)
+        response = self.client.get(reverse("mobile_api:villages"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 0)
+        bootstrap = self.client.get(reverse("mobile_api:bootstrap"))
+        self.assertEqual(bootstrap.data["villages"], [])
+        Village.objects.filter(pk=self.village.pk).update(is_active=True)
+        report = create_report(village=self.village, reporting_period=self.period, prepared_by=self.user)
+        Tikina.objects.filter(pk=self.tikina.pk).update(is_active=False)
+        self.assertEqual(len(self.client.get(reverse("mobile_api:villages")).data), 0)
+        bootstrap = self.client.get(reverse("mobile_api:bootstrap"))
+        self.assertEqual([item["name_en"] for item in bootstrap.data["villages"]], ["Village A1"])
+        self.assertIn(str(report.uuid), [str(item["uuid"]) for item in bootstrap.data["reports"]])
+
     def test_login_registers_device_and_tokens_are_device_bound(self):
         identifier = uuid.uuid4()
         response = self.login(identifier=identifier)

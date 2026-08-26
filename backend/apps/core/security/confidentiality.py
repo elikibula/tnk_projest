@@ -275,6 +275,16 @@ def can_view_document(user, document):
     if _clearance(user) < record_confidentiality_level(document):
         return False
     roles = role_codes_for_user(user)
+    # Record photos must satisfy both report workflow and entry permissions.
+    # A report-level EvidenceLink must not bypass the record's section scope.
+    photo = getattr(document, "record_photo", None)
+    if photo is not None:
+        from apps.reporting.section_registry import get_entry_config
+        config = get_entry_config(photo.section_code, photo.entry_key)
+        report = photo.report
+        allowed_roles = PRE_SUBMISSION_EVIDENCE_ROLES if report.status in PRE_SUBMISSION_STATUSES else REPORT_EVIDENCE_ROLES
+        return bool(config and roles & allowed_roles and can_view_report(user, report)
+                    and can_view_entry(user, photo.section_code, config.model, report.village))
     for link in document.links.select_related("content_type"):
         linked = link.content_object
         if linked is None:

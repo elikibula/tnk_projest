@@ -1,10 +1,718 @@
-{% extends "base.html" %}{% load i18n reporting_i18n %}{% block title %}{{ report }} | TNK Insight{% endblock %}{% block content %}
-<nav class="breadcrumb" aria-label="Breadcrumb"><a href="{% url 'reporting:list' %}">{% translate "Reports" %}</a><span aria-hidden="true">›</span><span>{{ report.village }}</span></nav>
-<div class="page-heading"><div><p class="eyebrow">{{ report.reporting_period }}</p><h1>{{ report.village }}</h1><p><span class="status-badge {{ report.status }}">{{ report.get_status_display|itaukei }}</span>{% if report.previous_report %} <span class="ml-2">{% translate "Previous comparison" %}: {{ report.previous_report.reporting_period }}</span>{% endif %}</p></div>{% if report.is_editable %}<a class="primary-button" href="#report-sections">{% translate "Continue data entry" %}<span aria-hidden="true">↓</span></a>{% endif %}</div>
-<section class="stat-grid" aria-label="{% translate 'Report progress' %}"><div class="app-card stat-card"><span class="stat-label">{% translate "Completion" %}</span><div class="stat-value">{{ report.completeness_percentage }}%</div><div class="progress-track mt-2"><div class="progress-fill" style="width:{{ report.completeness_percentage }}%"></div></div></div><div class="app-card stat-card"><span class="stat-label">{% translate "Data quality" %}</span><div class="stat-value">{{ report.data_quality_score|default:"—" }}</div><div class="stat-hint">{% translate "Run validation to update" %}</div></div><div class="app-card stat-card"><span class="stat-label">{% translate "Open issues" %}</span><div class="stat-value">{{ quality_issues|length }}</div><div class="stat-hint">{% translate "Issues requiring attention" %}</div></div><div class="app-card stat-card"><span class="stat-label">{% translate "Report status" %}</span><div class="mt-3"><span class="status-badge {{ report.status }}">{{ report.get_status_display|itaukei }}</span></div></div></section>
-<section class="app-card workflow-card"><div class="card-header"><div><h2>{% translate "Validation and submission" %}</h2><p>{% translate "Check the report for missing or inconsistent information before moving it to the next stage." %}</p></div>{% if can_validate %}<form method="post" action="{% url 'reporting:validate' report.uuid %}">{% csrf_token %}<button class="secondary-button" type="submit">✓ {% translate "Validate report" %}</button></form>{% endif %}</div>{% if quality_issues %}<div class="issue-panel"><strong>{% translate "Please resolve these issues" %}</strong><ul>{% for issue in quality_issues %}<li><span class="status-badge">{{ issue.get_severity_display }}</span><span>{{ issue.message }}</span></li>{% endfor %}</ul></div>{% else %}<div class="success-panel">✓ {% translate "No unresolved validation issues are currently shown." %}</div>{% endif %}
-{% if report.is_editable %}<form method="post" action="{% url 'reporting:declare' report.uuid %}" class="declaration-row">{% csrf_token %}<label><input type="checkbox" name="acknowledged"> <span><b>{% translate "Final declaration" %}</b><small>{% translate "I confirm this report is complete and accurate to the best of my knowledge." %}</small></span></label><button class="secondary-button" type="submit">{% translate "Save declaration" %}</button></form>{% endif %}
-<div class="workflow-actions">{% if 'mark_ready' in workflow_actions %}<form method="post" action="{% url 'reporting:workflow_action' report.uuid 'mark_ready' %}">{% csrf_token %}<button class="primary-button">{% translate "Mark ready for validation" %}</button></form>{% endif %}{% if 'reopen_draft' in workflow_actions %}<form method="post" action="{% url 'reporting:workflow_action' report.uuid 'reopen_draft' %}">{% csrf_token %}<button class="secondary-button">{% translate "Return to draft" %}</button></form>{% endif %}{% if 'submit' in workflow_actions %}<form method="post" action="{% url 'reporting:workflow_action' report.uuid 'submit' %}">{% csrf_token %}<button class="primary-button">{% translate "Submit for Tikina review" %}</button></form>{% endif %}{% if 'start_tikina_review' in workflow_actions %}<form method="post" action="{% url 'reporting:workflow_action' report.uuid 'start_tikina_review' %}">{% csrf_token %}<button class="primary-button">{% translate "Start Tikina review" %}</button></form>{% endif %}{% if 'forward' in workflow_actions %}<form method="post" action="{% url 'reporting:workflow_action' report.uuid 'forward' %}">{% csrf_token %}<button class="primary-button">{% translate "Forward to Province" %}</button></form>{% endif %}{% if 'return' in workflow_actions %}<form method="post" action="{% url 'reporting:workflow_action' report.uuid 'return' %}" class="return-form">{% csrf_token %}<label for="return-comment" class="sr-only">{% translate "Correction instructions" %}</label><input id="return-comment" name="comment" required placeholder="{% translate 'Explain what needs to be corrected' %}"><button class="secondary-button">{% translate "Return for correction" %}</button></form>{% endif %}{% if 'reject' in workflow_actions %}<form method="post" action="{% url 'reporting:workflow_action' report.uuid 'reject' %}" class="return-form">{% csrf_token %}<label for="reject-comment" class="sr-only">{% translate "Rejection reason" %}</label><input id="reject-comment" name="comment" required placeholder="{% translate 'Explain why this report is rejected' %}"><button class="secondary-button">{% translate "Reject report" %}</button></form>{% endif %}{% if 'approve' in workflow_actions %}<form method="post" action="{% url 'reporting:workflow_action' report.uuid 'approve' %}" class="ack-action">{% csrf_token %}<label><input required type="checkbox" name="acknowledged"> {% translate "I acknowledge this approval" %}</label><button class="primary-button">{% translate "Approve report" %}</button></form>{% endif %}{% if 'lock' in workflow_actions %}<form method="post" action="{% url 'reporting:workflow_action' report.uuid 'lock' %}" class="ack-action">{% csrf_token %}<label><input required type="checkbox" name="acknowledged"> {% translate "I acknowledge this action" %}</label><button class="primary-button">{% translate "Lock report" %}</button></form>{% endif %}{% if 'archive' in workflow_actions %}<form method="post" action="{% url 'reporting:workflow_action' report.uuid 'archive' %}" class="return-form">{% csrf_token %}<label for="archive-comment" class="sr-only">{% translate "Archival reason" %}</label><input id="archive-comment" name="comment" required placeholder="{% translate 'Explain why this report is being archived' %}"><label><input required type="checkbox" name="acknowledged"> {% translate "I acknowledge this archival" %}</label><button class="secondary-button">{% translate "Archive report" %}</button></form>{% endif %}</div></section>
-{% if can_request_amendment or amendments %}<section class="app-card mt-5"><div class="card-header"><div><h2>{% translate "Official corrections" %}</h2><p>{% if authoritative_amendment %}{% translate "Approved corrections are shown beside the original values while the signed report remains unchanged." %}{% else %}{% translate "Request a reviewed correction without unlocking or rewriting this official report." %}{% endif %}</p></div><a class="secondary-button" href="{% url 'reporting:amendment_list' report.uuid %}">{% translate "View amendment history" %} ({{ amendments|length }})</a></div>{% if authoritative_amendment %}<div class="success-panel">✓ {% translate "Authoritative amendment" %} {{ authoritative_amendment.amendment_number }} · {{ authoritative_amendment.approved_at }}</div>{% endif %}</section>{% endif %}
-<section id="report-sections" class="mt-7"><div class="section-heading"><div><h2>{% translate "Report sections" %}</h2><p>{% translate "Work through each section. Small records save independently, so you can stop and continue later." %}</p></div><span>{{ sections|length }} {% translate "sections" %}</span></div><div class="section-grid">{% for section in sections %}<a href="{% url 'reporting:section_update' report.uuid section.section_code %}" class="section-card app-card"><div class="section-number">{{ forloop.counter }}</div><div class="section-content"><div class="section-title"><h3>{{ section.get_section_code_display|itaukei }}</h3><span>{{ section.completion_percentage }}%</span></div><div class="progress-track"><div class="progress-fill" style="width:{{ section.completion_percentage }}%"></div></div><div class="section-meta"><span class="status-badge">{{ section.get_status_display|itaukei }}</span>{% if section.issue_count %}<span class="issue-count">{{ section.issue_count }} {% translate "issues" %}</span>{% endif %}{% if section.last_updated_by %}<span>{% translate "Updated by" %} {{ section.last_updated_by }}</span>{% endif %}</div></div><span class="section-arrow" aria-hidden="true">→</span></a>{% endfor %}</div></section>
+{% extends "base.html" %}
+{% load i18n reporting_i18n %}
+
+{% block title %}
+    {{ report }} | TNK Insight
+{% endblock %}
+
+{% block content %}
+
+<nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="{% url 'reporting:list' %}">
+        {% translate "Reports" %}
+    </a>
+
+    <span aria-hidden="true">›</span>
+
+    <span>{{ report.village }}</span>
+</nav>
+
+
+<div class="page-heading">
+
+    <div>
+
+        <p class="eyebrow">
+            {{ report.reporting_period }}
+        </p>
+
+        <h1>
+            {{ report.village }}
+        </h1>
+
+        <p>
+
+            <span class="status-badge {{ report.status }}">
+                {{ report.get_status_display|itaukei }}
+            </span>
+
+            {% if report.previous_report %}
+                <span class="ml-2">
+                    {% translate "Previous comparison" %}:
+                    {{ report.previous_report.reporting_period }}
+                </span>
+            {% endif %}
+
+        </p>
+
+    </div>
+
+    {% if report.is_editable %}
+
+        <a
+            class="primary-button"
+            href="#report-sections"
+        >
+            {% translate "Continue data entry" %}
+            <span aria-hidden="true">↓</span>
+        </a>
+
+    {% endif %}
+
+</div>
+
+
+<section
+    class="stat-grid"
+    aria-label="{% translate 'Report progress' %}"
+>
+
+    <div class="app-card stat-card">
+
+        <span class="stat-label">
+            {% translate "Completion" %}
+        </span>
+
+        <div class="stat-value">
+            {{ report.completeness_percentage }}%
+        </div>
+
+        <div class="progress-track mt-2">
+
+            <div
+                class="progress-fill"
+                style="width:{{ report.completeness_percentage }}%"
+            ></div>
+
+        </div>
+
+    </div>
+
+
+    <div class="app-card stat-card">
+
+        <span class="stat-label">
+            {% translate "Data quality" %}
+        </span>
+
+        <div class="stat-value">
+            {{ report.data_quality_score|default:"—" }}
+        </div>
+
+        <div class="stat-hint">
+            {% translate "Run validation to update" %}
+        </div>
+
+    </div>
+
+
+    <div class="app-card stat-card">
+
+        <span class="stat-label">
+            {% translate "Open issues" %}
+        </span>
+
+        <div class="stat-value">
+            {{ quality_issues|length }}
+        </div>
+
+        <div class="stat-hint">
+            {% translate "Issues requiring attention" %}
+        </div>
+
+    </div>
+
+
+    <div class="app-card stat-card">
+
+        <span class="stat-label">
+            {% translate "Report status" %}
+        </span>
+
+        <div class="mt-3">
+
+            <span class="status-badge {{ report.status }}">
+                {{ report.get_status_display|itaukei }}
+            </span>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="app-card workflow-card">
+
+    <div class="card-header">
+
+        <div>
+
+            <h2>
+                {% translate "Validation and submission" %}
+            </h2>
+
+            <p>
+                {% translate "Check the report for missing or inconsistent information before moving it to the next stage." %}
+            </p>
+
+        </div>
+
+
+        {% if can_validate %}
+
+            <form
+                method="post"
+                action="{% url 'reporting:validate' report.uuid %}"
+            >
+
+                {% csrf_token %}
+
+                <button
+                    class="secondary-button"
+                    type="submit"
+                >
+                    ✓ {% translate "Validate report" %}
+                </button>
+
+            </form>
+
+        {% endif %}
+
+    </div>
+
+
+    {% if quality_issues %}
+
+        <div class="issue-panel">
+
+            <strong>
+                {% translate "Please resolve these issues" %}
+            </strong>
+
+            <ul>
+
+                {% for issue in quality_issues %}
+
+                    <li>
+
+                        <span class="status-badge">
+                            {{ issue.get_severity_display }}
+                        </span>
+
+                        <span>
+                            {{ issue.message }}
+                        </span>
+
+                    </li>
+
+                {% endfor %}
+
+            </ul>
+
+        </div>
+
+    {% else %}
+
+        <div class="success-panel">
+            ✓ {% translate "No unresolved validation issues are currently shown." %}
+        </div>
+
+    {% endif %}
+
+
+    {% if report.is_editable %}
+
+        <form
+            method="post"
+            action="{% url 'reporting:declare' report.uuid %}"
+            class="declaration-row"
+        >
+
+            {% csrf_token %}
+
+            <label>
+
+                <input
+                    type="checkbox"
+                    name="acknowledged"
+                >
+
+                <span>
+
+                    <b>
+                        {% translate "Final declaration" %}
+                    </b>
+
+                    <small>
+                        {% translate "I confirm this report is complete and accurate to the best of my knowledge." %}
+                    </small>
+
+                </span>
+
+            </label>
+
+            <button
+                class="secondary-button"
+                type="submit"
+            >
+                {% translate "Save declaration" %}
+            </button>
+
+        </form>
+
+    {% endif %}
+
+
+    <div class="workflow-actions">
+
+
+        {% if 'mark_ready' in workflow_actions %}
+
+            <form
+                method="post"
+                action="{% url 'reporting:workflow_action' report.uuid 'mark_ready' %}"
+            >
+
+                {% csrf_token %}
+
+                <button class="primary-button">
+                    {% translate "Mark ready for validation" %}
+                </button>
+
+            </form>
+
+        {% endif %}
+
+
+        {% if 'reopen_draft' in workflow_actions %}
+
+            <form
+                method="post"
+                action="{% url 'reporting:workflow_action' report.uuid 'reopen_draft' %}"
+            >
+
+                {% csrf_token %}
+
+                <button class="secondary-button">
+                    {% translate "Return to draft" %}
+                </button>
+
+            </form>
+
+        {% endif %}
+
+
+        {% if 'submit' in workflow_actions %}
+
+            <form
+                method="post"
+                action="{% url 'reporting:workflow_action' report.uuid 'submit' %}"
+            >
+
+                {% csrf_token %}
+
+                <button class="primary-button">
+                    {% translate "Submit for Tikina review" %}
+                </button>
+
+            </form>
+
+        {% endif %}
+
+
+        {% if 'start_tikina_review' in workflow_actions %}
+
+            <form
+                method="post"
+                action="{% url 'reporting:workflow_action' report.uuid 'start_tikina_review' %}"
+            >
+
+                {% csrf_token %}
+
+                <button class="primary-button">
+                    {% translate "Start Tikina review" %}
+                </button>
+
+            </form>
+
+        {% endif %}
+
+
+        {% if 'forward' in workflow_actions %}
+
+            <form
+                method="post"
+                action="{% url 'reporting:workflow_action' report.uuid 'forward' %}"
+            >
+
+                {% csrf_token %}
+
+                <button class="primary-button">
+                    {% translate "Forward to Province" %}
+                </button>
+
+            </form>
+
+        {% endif %}
+
+
+        {% if 'return' in workflow_actions %}
+
+            <form
+                method="post"
+                action="{% url 'reporting:workflow_action' report.uuid 'return' %}"
+                class="return-form"
+            >
+
+                {% csrf_token %}
+
+                <label
+                    for="return-comment"
+                    class="sr-only"
+                >
+                    {% translate "Correction instructions" %}
+                </label>
+
+                <input
+                    id="return-comment"
+                    name="comment"
+                    required
+                    placeholder="{% translate 'Explain what needs to be corrected' %}"
+                >
+
+                <button class="secondary-button">
+                    {% translate "Return for correction" %}
+                </button>
+
+            </form>
+
+        {% endif %}
+
+
+        {% if 'reject' in workflow_actions %}
+
+            <form
+                method="post"
+                action="{% url 'reporting:workflow_action' report.uuid 'reject' %}"
+                class="return-form"
+            >
+
+                {% csrf_token %}
+
+                <label
+                    for="reject-comment"
+                    class="sr-only"
+                >
+                    {% translate "Rejection reason" %}
+                </label>
+
+                <input
+                    id="reject-comment"
+                    name="comment"
+                    required
+                    placeholder="{% translate 'Explain why this report is rejected' %}"
+                >
+
+                <button class="secondary-button">
+                    {% translate "Reject report" %}
+                </button>
+
+            </form>
+
+        {% endif %}
+
+
+        {% if 'approve' in workflow_actions %}
+
+            <form
+                method="post"
+                action="{% url 'reporting:workflow_action' report.uuid 'approve' %}"
+                class="ack-action"
+            >
+
+                {% csrf_token %}
+
+                <label>
+
+                    <input
+                        required
+                        type="checkbox"
+                        name="acknowledged"
+                    >
+
+                    {% translate "I acknowledge this approval" %}
+
+                </label>
+
+                <button class="primary-button">
+                    {% translate "Approve report" %}
+                </button>
+
+            </form>
+
+        {% endif %}
+
+
+        {% if 'lock' in workflow_actions %}
+
+            <form
+                method="post"
+                action="{% url 'reporting:workflow_action' report.uuid 'lock' %}"
+                class="ack-action"
+            >
+
+                {% csrf_token %}
+
+                <label>
+
+                    <input
+                        required
+                        type="checkbox"
+                        name="acknowledged"
+                    >
+
+                    {% translate "I acknowledge this action" %}
+
+                </label>
+
+                <button class="primary-button">
+                    {% translate "Lock report" %}
+                </button>
+
+            </form>
+
+        {% endif %}
+
+
+        {% if 'archive' in workflow_actions %}
+
+            <form
+                method="post"
+                action="{% url 'reporting:workflow_action' report.uuid 'archive' %}"
+                class="return-form"
+            >
+
+                {% csrf_token %}
+
+                <label
+                    for="archive-comment"
+                    class="sr-only"
+                >
+                    {% translate "Archival reason" %}
+                </label>
+
+                <input
+                    id="archive-comment"
+                    name="comment"
+                    required
+                    placeholder="{% translate 'Explain why this report is being archived' %}"
+                >
+
+                <label>
+
+                    <input
+                        required
+                        type="checkbox"
+                        name="acknowledged"
+                    >
+
+                    {% translate "I acknowledge this archival" %}
+
+                </label>
+
+                <button class="secondary-button">
+                    {% translate "Archive report" %}
+                </button>
+
+            </form>
+
+        {% endif %}
+
+    </div>
+
+</section>
+
+
+{% if can_request_amendment or amendments %}
+
+    <section class="app-card mt-5">
+
+        <div class="card-header">
+
+            <div>
+
+                <h2>
+                    {% translate "Official corrections" %}
+                </h2>
+
+                <p>
+
+                    {% if authoritative_amendment %}
+
+                        {% translate "Approved corrections are shown beside the original values while the signed report remains unchanged." %}
+
+                    {% else %}
+
+                        {% translate "Request a reviewed correction without unlocking or rewriting this official report." %}
+
+                    {% endif %}
+
+                </p>
+
+            </div>
+
+
+            <a
+                class="secondary-button"
+                href="{% url 'reporting:amendment_list' report.uuid %}"
+            >
+                {% translate "View amendment history" %}
+                ({{ amendments|length }})
+            </a>
+
+        </div>
+
+
+        {% if authoritative_amendment %}
+
+            <div class="success-panel">
+                ✓ {% translate "Authoritative amendment" %}
+                {{ authoritative_amendment.amendment_number }}
+                ·
+                {{ authoritative_amendment.approved_at }}
+            </div>
+
+        {% endif %}
+
+    </section>
+
+{% endif %}
+
+
+<section
+    id="report-sections"
+    class="mt-7"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <h2>
+                {% translate "Report sections" %}
+            </h2>
+
+            <p>
+                {% translate "Work through each section. Small records save independently, so you can stop and continue later." %}
+            </p>
+
+        </div>
+
+        <span>
+            {{ sections|length }}
+            {% translate "sections" %}
+        </span>
+
+    </div>
+
+    <div class="data-type-legend" aria-label="{% translate 'Data type colour key' %}">
+        <span class="data-type-chip data-type-master">{% translate "Master / Base data" %}</span>
+        <span class="data-type-chip data-type-operational">{% translate "Operational / Event data" %}</span>
+        <span class="data-type-chip data-type-snapshot">{% translate "Snapshot data" %}</span>
+        <span class="data-type-chip data-type-workflow">{% translate "Evidence / Workflow / Derived data" %}</span>
+    </div>
+
+
+    <div class="section-grid">
+
+        {% for section in sections %}
+
+            <a
+                href="{% url 'reporting:section_update' report.uuid section.section_code %}"
+                class="section-card app-card"
+            >
+
+                <div class="section-number">
+                    {{ forloop.counter }}
+                </div>
+
+
+                <div class="section-content">
+
+                    <div class="section-title">
+
+                        <h3>
+                            {{ section.get_section_code_display|itaukei }}
+                        </h3>
+
+                        <span>
+                            {{ section.completion_percentage }}%
+                        </span>
+
+                    </div>
+
+
+                    <div class="progress-track">
+
+                        <div
+                            class="progress-fill"
+                            style="width:{{ section.completion_percentage }}%"
+                        ></div>
+
+                    </div>
+
+
+                    <div class="section-meta">
+
+                        <span class="section-data-types">
+                            {% for data_type in section.data_types %}
+                                <span class="data-type-chip data-type-{{ data_type.key }}">{{ data_type.label }}</span>
+                            {% endfor %}
+                        </span>
+
+                        <span class="status-badge">
+                            {{ section.get_status_display|itaukei }}
+                        </span>
+
+
+                        {% if section.issue_count %}
+
+                            <span class="issue-count">
+                                {{ section.issue_count }}
+                                {% translate "issues" %}
+                            </span>
+
+                        {% endif %}
+
+
+                        {% if section.last_updated_by %}
+
+                            <span>
+                                {% translate "Updated by" %}
+                                {{ section.last_updated_by }}
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <span
+                    class="section-arrow"
+                    aria-hidden="true"
+                >
+                    →
+                </span>
+
+            </a>
+
+        {% endfor %}
+
+    </div>
+
+</section>
+
 {% endblock %}

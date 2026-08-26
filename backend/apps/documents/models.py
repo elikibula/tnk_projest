@@ -25,3 +25,18 @@ class EvidenceDocument(models.Model):
 class EvidenceLink(models.Model):
     document=models.ForeignKey(EvidenceDocument,on_delete=models.CASCADE,related_name="links"); content_type=models.ForeignKey(ContentType,on_delete=models.CASCADE); object_id=models.PositiveBigIntegerField(); content_object=GenericForeignKey(); created_at=models.DateTimeField(auto_now_add=True)
     class Meta: constraints=[models.UniqueConstraint(fields=("document","content_type","object_id"),name="unique_evidence_link")]
+
+
+class RecordPhoto(models.Model):
+    """Report-scoped attachment; stable public identifiers also survive snapshots."""
+
+    STAGES = (("observation", "Observation"), ("before", "Before"), ("progress", "Progress"), ("after", "After"))
+    document = models.OneToOneField(EvidenceDocument, on_delete=models.CASCADE, related_name="record_photo")
+    report = models.ForeignKey("reporting.TNKReport", on_delete=models.PROTECT, related_name="record_photos")
+    section_code = models.CharField(max_length=40)
+    entry_key = models.CharField(max_length=50)
+    record_identifier = models.CharField(max_length=64)
+    stage = models.CharField(max_length=20, choices=STAGES, default="observation")
+
+    class Meta:
+        indexes = [models.Index(fields=("report", "section_code", "entry_key", "record_identifier"), name="record_photo_target_idx")]

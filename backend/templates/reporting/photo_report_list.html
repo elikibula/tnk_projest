@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% translate "Photo Reports" %} | TNK Insight{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">{% translate "Visual report review" %}</p><h1>{% translate "Photo Reports" %}</h1><p>{% translate "Choose a village report to review its uploaded photos without opening each data-entry form." %}</p></div></div>
+<form method="get" class="app-card form-card"><h2>{% translate "Find a report" %}</h2><div class="field-grid">{{ filters.as_p }}</div><div class="form-actions"><button class="primary-button" type="submit">{% translate "Find reports" %}</button><a class="secondary-button" href="{% url 'reporting:photo_report_list' %}">{% translate "Clear filters" %}</a></div></form>
+<p class="app-message info">{% translate "Only reports within your assigned locations are listed. Draft evidence and confidential photos remain subject to existing access rules." %}</p>
+<section class="app-card"><div class="card-header"><h2>{% translate "Select a report" %}</h2><span>{{ page_obj.paginator.count }} {% translate "reports" %}</span></div><div class="record-list">
+{% for report in page_obj %}<div class="record-row"><div><strong>{{ report.village }}</strong><small>{{ report.village.tikina.province }} · {{ report.village.tikina }} · {{ report.reporting_period }}</small><span class="status-badge {{ report.status }}">{{ report.get_status_display }}</span></div><a class="primary-button" href="{% url 'reporting:photo_report_detail' report.uuid %}">{% translate "View photos" %}</a></div>{% empty %}<div class="empty-state"><h2>{% translate "No matching reports" %}</h2><p>{% translate "Check your filters or choose another reporting period." %}</p></div>{% endfor %}
+</div></section>
+{% include "reporting/_photo_pagination.html" %}
+{% endblock %}
