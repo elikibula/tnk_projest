@@ -1,0 +1,49 @@
+warning: in the working copy of 'docs/demo-data.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/core/auth/auth_models.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/core/auth/auth_providers.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/core/auth/auth_repository.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/core/bootstrap/bootstrap_providers.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/core/sync/sync_providers.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/features/authentication/presentation/authenticated_home_screen.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/features/dashboard/data/dashboard_providers.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/features/dashboard/data/dashboard_repository.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/features/dashboard/domain/dashboard_models.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/features/dashboard/presentation/dashboard_screen.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/features/evidence/data/evidence_providers.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/features/evidence/domain/evidence_models.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/features/evidence/presentation/evidence_capture_screen.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/features/reporting/data/reporting_repository.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/features/reporting/domain/reporting_models.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/features/reporting/presentation/report_list_screen.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/features/reporting/presentation/report_section_screen.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/features/reporting/presentation/section_entries_screen.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/features/validation/data/validation_providers.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/lib/features/validation/presentation/validation_workflow_screen.dart', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/pubspec.lock', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mobile/pubspec.yaml', LF will be replaced by CRLF the next time Git touches it
+ docs/demo-data.md                                  |  83 [32m++++++++++++++[m
+ mobile/README.md                                   |  28 [32m+++++[m
+ mobile/lib/core/auth/auth_models.dart              |  21 [32m++++[m
+ mobile/lib/core/auth/auth_providers.dart           |  33 [32m++++++[m
+ mobile/lib/core/auth/auth_repository.dart          |  17 [32m++[m[31m-[m
+ mobile/lib/core/bootstrap/bootstrap_providers.dart |   3 [32m+[m[31m-[m
+ mobile/lib/core/sync/sync_providers.dart           |   3 [32m+[m[31m-[m
+ .../presentation/authenticated_home_screen.dart    |  33 [32m++++++[m
+ .../dashboard/data/dashboard_providers.dart        |   4 [32m+[m[31m-[m
+ .../dashboard/data/dashboard_repository.dart       |  13 [32m++[m[31m-[m
+ .../dashboard/domain/dashboard_models.dart         |  12 [32m++[m[31m-[m
+ .../dashboard/presentation/dashboard_screen.dart   | 102 [32m++++++++++++++++++[m
+ .../features/evidence/data/evidence_providers.dart |   4 [32m+[m[31m-[m
+ .../features/evidence/domain/evidence_models.dart  |  16 [32m+++[m
+ .../presentation/evidence_capture_screen.dart      |  33 [32m++++++[m
+ .../reporting/data/reporting_repository.dart       |   1 [32m+[m
+ .../reporting/domain/reporting_models.dart         |  38 [32m++++++[m[31m-[m
+ .../reporting/presentation/report_list_screen.dart | 119 [32m+++++++++++++++[m[31m------[m
+ .../presentation/report_section_screen.dart        |  74 [32m+++++++++++[m[31m--[m
+ .../presentation/section_entries_screen.dart       |  44 [32m+++++++[m[31m-[m
+ .../validation/data/validation_providers.dart      |   4 [32m+[m[31m-[m
+ .../presentation/validation_workflow_screen.dart   |  20 [32m++++[m
+ mobile/pubspec.lock                                |   2 [32m+[m[31m-[m
+ mobile/pubspec.yaml                                |   3 [32m+[m[31m-[m
+ 24 files changed, 651 insertions(+), 59 deletions(-)

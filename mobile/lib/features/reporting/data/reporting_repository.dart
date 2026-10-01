@@ -116,6 +116,7 @@ class ReportingRepository {
             payloadJson: row.payloadJson,
             syncStatus: row.syncStatus,
             updatedAt: row.updatedAt,
+            serverUuid: row.serverUuid,
           ),
         )
         .where((entry) => entry.sectionCode == sectionCode)

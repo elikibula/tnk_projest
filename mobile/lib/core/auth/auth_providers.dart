@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import '../api/authenticated_client.dart';
 
 import '../api/api_client.dart';
 import '../config/app_environment.dart';
@@ -29,6 +31,19 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 });
 
 class AuthController extends AsyncNotifier<AuthSession?> {
+  Future<String> refreshAfterUnauthorized() async {
+    final session = state.value;
+    if (session == null) throw const SessionExpiredFailure();
+    final updated = await ref
+        .read(authRepositoryProvider)
+        .refreshRejectedSession(session);
+    if (state.value?.user.uuid != session.user.uuid) {
+      throw const SessionExpiredFailure();
+    }
+    state = AsyncData(updated);
+    return updated.tokens.accessToken;
+  }
+
   @override
   Future<AuthSession?> build() => ref.watch(authRepositoryProvider).restore();
 
@@ -75,3 +90,21 @@ class AuthController extends AsyncNotifier<AuthSession?> {
 
 final authControllerProvider =
     AsyncNotifierProvider<AuthController, AuthSession?>(AuthController.new);
+
+final authenticatedDioProvider = Provider<Dio>((ref) {
+  final base = ref.watch(dioProvider);
+  final client = Dio(base.options.copyWith());
+  client.interceptors.add(
+    SessionInterceptor(
+      client,
+      currentToken: () =>
+          ref.read(authControllerProvider).value?.tokens.accessToken,
+      refresh: () =>
+          ref.read(authControllerProvider.notifier).refreshAfterUnauthorized(),
+      expire: () =>
+          ref.read(authControllerProvider.notifier).invalidateSession(),
+    ),
+  );
+  ref.onDispose(() => client.close(force: true));
+  return client;
+});

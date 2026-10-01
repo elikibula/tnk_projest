@@ -85,7 +85,13 @@ class DashboardSnapshot {
 }
 
 class StartReportOption {
-  const StartReportOption(this.uuid, this.label);
-  final String uuid;
-  final String label;
+  const StartReportOption(
+    this.uuid,
+    this.label, {
+    this.tikinaUuid = '',
+    this.tikina = '',
+    this.provinceUuid = '',
+    this.province = '',
+  });
+  final String uuid, label, tikinaUuid, tikina, provinceUuid, province;
 }

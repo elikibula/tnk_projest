@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../api/api_client.dart';
 import '../auth/auth_failures.dart';
 import '../auth/auth_providers.dart';
 import '../database/database_providers.dart';
@@ -10,7 +9,7 @@ import 'sync_repository.dart';
 import '../../features/evidence/data/evidence_providers.dart';
 
 final syncRemoteDataSourceProvider = Provider<SyncRemoteDataSource>(
-  (ref) => DioSyncRemoteDataSource(ref.watch(dioProvider)),
+  (ref) => DioSyncRemoteDataSource(ref.watch(authenticatedDioProvider)),
 );
 final syncRepositoryProvider = FutureProvider<SyncRepository>((ref) async {
   return SyncRepository(

@@ -25,7 +25,14 @@ class DashboardRepository {
       );
       await _cache(session.user.uuid, payload, reportUuid);
     } on Object catch (error) {
-      if (error is! DioException && error is! DashboardOffline) rethrow;
+      if (error is DioException &&
+          (error.response?.statusCode == 401 ||
+              error.response?.statusCode == 403)) {
+        rethrow;
+      }
+      if (error is! DioException && error is! DashboardOffline) {
+        rethrow;
+      }
       final cached = await _cached(session.user.uuid, reportUuid);
       if (cached == null) rethrow;
       payload = cached;
@@ -64,6 +71,10 @@ class DashboardRepository {
               return StartReportOption(
                 row.serverUuid,
                 localized.isNotEmpty ? localized : value['name_en'].toString(),
+                tikinaUuid: value['tikina_uuid']?.toString() ?? '',
+                tikina: value['tikina_name_en']?.toString() ?? '',
+                provinceUuid: value['province_uuid']?.toString() ?? '',
+                province: value['province_name_en']?.toString() ?? '',
               );
             }).toList(),
           );

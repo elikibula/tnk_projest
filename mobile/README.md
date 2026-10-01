@@ -6,6 +6,34 @@ reporting, durable synchronization and conflicts, protected evidence,
 authoritative validation/workflow, dashboard indicators, bilingual UI support,
 accessibility foundations, and release-oriented security controls.
 
+Version `1.0.1+2` adds a role-aware profile, scoped Province/Tikina/Village
+directory, backend-calculated analytics with reporting-period comparison and
+drill-down, cascading report location selection, report filters and workflow
+history, and one-time access-token refresh for authenticated API calls.
+
+The mobile reporting experience now carries the website's data-type presentation
+through to Flutter: red Master/Base, green Operational/Event, purple Snapshot,
+and gold Evidence/Workflow/Derived labels and card accents. Senior officers with
+the same website roles receive Photo Reports with scoped report filters, area and
+progress-stage filters, protected previews, capture time, confidentiality, GPS,
+record context and full-screen zoom. Supported synced records can capture staged
+photo evidence directly from their mobile card. Location browsing retrieves every
+authorised paginated Province, Tikina and Village and links villages to their
+report history and analytics. Analytics includes period comparison, official
+indicators, hierarchy drill-down, insights, trends and missing-report follow-up.
+
+The mobile client uses these additional read-only endpoints:
+
+- `GET /api/v1/locations/` for the assigned hierarchy
+- `GET /api/v1/analytics/` for scoped, server-calculated analytics
+- `GET /api/v1/photo-reports/` for authorised village report selection
+- `GET /api/v1/photo-reports/<report UUID>/` for the filtered photo gallery
+- `GET /api/v1/photo-reports/images/<document UUID>/` for private image bytes
+
+User and location administration remains in the Django web application. The
+mobile app does not invent mutation endpoints or notification behavior that the
+backend does not provide.
+
 ## Entrypoints
 
 - `lib/main_development.dart`

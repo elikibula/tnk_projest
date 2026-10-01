@@ -7,6 +7,7 @@ import '../domain/reporting_models.dart';
 import 'report_entry_form_screen.dart';
 import '../../evidence/presentation/evidence_capture_screen.dart';
 import '../../validation/presentation/validation_workflow_screen.dart';
+import 'data_type_style.dart';
 
 class SectionEntriesScreen extends ConsumerStatefulWidget {
   const SectionEntriesScreen({
@@ -117,11 +118,19 @@ class _SectionEntriesScreenState extends ConsumerState<SectionEntriesScreen> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(4, 20, 4, 8),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Text(
-                            definition.label,
-                            style: Theme.of(context).textTheme.titleMedium,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              DataTypeLabel(definition.dataType),
+                              const SizedBox(height: 7),
+                              Text(
+                                definition.label,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ],
                           ),
                         ),
                         if (widget.editable && definition.allowCreate)
@@ -136,14 +145,39 @@ class _SectionEntriesScreenState extends ConsumerState<SectionEntriesScreen> {
                   for (final entry in entries.where(
                     (value) => value.entryType == definition.key,
                   ))
-                    Card(
+                    DataTypeCard(
+                      dataType: definition.dataType,
                       child: ListTile(
                         leading: const Icon(Icons.edit_note_outlined),
                         title: Text(_entryTitle(definition, entry)),
                         subtitle: Text(
                           '${entry.syncStatus.replaceAll('_', ' ')} · Saved on device',
                         ),
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (definition.supportsPhotos &&
+                                entry.serverUuid != null)
+                              IconButton(
+                                tooltip: 'Photo evidence',
+                                icon: const Icon(Icons.add_a_photo_outlined),
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => EvidenceCaptureScreen(
+                                      session: widget.session,
+                                      reportLocalUuid: widget.reportLocalUuid,
+                                      editable: widget.editable,
+                                      sectionCode: widget.section.code,
+                                      entryKey: definition.key,
+                                      recordIdentifier: entry.serverUuid,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            const Icon(Icons.chevron_right),
+                          ],
+                        ),
                         onTap: () => _openForm(definition, entry),
                       ),
                     ),

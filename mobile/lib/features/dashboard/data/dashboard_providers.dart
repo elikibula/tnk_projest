@@ -1,12 +1,12 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/api/api_client.dart';
+import '../../../core/auth/auth_providers.dart';
 import '../../../core/database/database_providers.dart';
 import 'dashboard_remote_data_source.dart';
 import 'dashboard_repository.dart';
 
 final dashboardRemoteProvider = Provider<DashboardRemoteDataSource>(
-  (ref) => DioDashboardRemoteDataSource(ref.watch(dioProvider)),
+  (ref) => DioDashboardRemoteDataSource(ref.watch(authenticatedDioProvider)),
 );
 final dashboardRepositoryProvider = FutureProvider<DashboardRepository>(
   (ref) async => DashboardRepository(

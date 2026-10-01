@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/api/api_client.dart';
+import '../../../core/auth/auth_providers.dart';
 import '../../../core/database/database_providers.dart';
 import 'validation_remote_data_source.dart';
 import 'validation_repository.dart';
 
 final validationRemoteProvider = Provider<ValidationRemoteDataSource>(
-  (ref) => DioValidationRemoteDataSource(ref.watch(dioProvider)),
+  (ref) => DioValidationRemoteDataSource(ref.watch(authenticatedDioProvider)),
 );
 final validationRepositoryProvider = FutureProvider<ValidationRepository>(
   (ref) async => ValidationRepository(

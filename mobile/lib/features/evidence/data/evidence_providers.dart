@@ -1,13 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/api/api_client.dart';
+import '../../../core/auth/auth_providers.dart';
 import '../../../core/database/database_providers.dart';
 import 'evidence_cipher.dart';
 import 'evidence_remote_data_source.dart';
 import 'evidence_repository.dart';
 
 final evidenceRemoteProvider = Provider<EvidenceRemoteDataSource>(
-  (ref) => DioEvidenceRemoteDataSource(ref.watch(dioProvider)),
+  (ref) => DioEvidenceRemoteDataSource(ref.watch(authenticatedDioProvider)),
 );
 final evidenceCipherProvider = Provider<EvidenceCipher>(
   (ref) => EvidenceCipher(),

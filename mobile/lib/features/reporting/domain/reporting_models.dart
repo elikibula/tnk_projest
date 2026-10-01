@@ -11,6 +11,15 @@ class LocalReportSummary {
     this.dataQualityScore,
     this.previousReportUuid,
     this.sections = const [],
+    this.villageName = '',
+    this.tikinaName = '',
+    this.provinceName = '',
+    this.periodLabel = '',
+    this.statusLabel = '',
+    this.canEdit,
+    this.updatedAt,
+    this.submittedAt,
+    this.workflowHistory = const [],
   });
 
   factory LocalReportSummary.fromJson(Map<String, dynamic> json) =>
@@ -32,6 +41,18 @@ class LocalReportSummary {
               ),
             )
             .toList(growable: false),
+        villageName: json['village_name']?.toString() ?? '',
+        tikinaName: json['tikina_name']?.toString() ?? '',
+        provinceName: json['province_name']?.toString() ?? '',
+        periodLabel: json['period_label']?.toString() ?? '',
+        statusLabel: json['status_label']?.toString() ?? '',
+        canEdit: json['can_edit'] as bool?,
+        updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? ''),
+        submittedAt: DateTime.tryParse(json['submitted_at']?.toString() ?? ''),
+        workflowHistory:
+            (json['workflow_history'] as List<dynamic>? ?? const [])
+                .map((item) => Map<String, dynamic>.from(item as Map))
+                .toList(growable: false),
       );
 
   final String uuid;
@@ -43,8 +64,13 @@ class LocalReportSummary {
   final double? dataQualityScore;
   final String? previousReportUuid;
   final List<LocalSectionStatus> sections;
+  final String villageName, tikinaName, provinceName, periodLabel, statusLabel;
+  final bool? canEdit;
+  final DateTime? updatedAt, submittedAt;
+  final List<Map<String, dynamic>> workflowHistory;
 
-  bool get isEditable => status == 'draft' || status == 'returned_to_village';
+  bool get isEditable =>
+      canEdit ?? (status == 'draft' || status == 'returned_to_village');
 }
 
 class LocalSectionStatus {
@@ -109,6 +135,8 @@ class ReportEntryDefinition {
     required this.fields,
     required this.allowCreate,
     required this.allowDelete,
+    required this.dataType,
+    required this.supportsPhotos,
   });
 
   factory ReportEntryDefinition.fromJson(Map<String, dynamic> json) {
@@ -138,6 +166,8 @@ class ReportEntryDefinition {
       fields: fields,
       allowCreate: json['allow_create'] as bool? ?? true,
       allowDelete: json['allow_delete'] as bool? ?? true,
+      dataType: json['data_type']?.toString() ?? 'workflow',
+      supportsPhotos: json['supports_photos'] as bool? ?? false,
     );
   }
 
@@ -146,6 +176,8 @@ class ReportEntryDefinition {
   final List<ReportFieldDefinition> fields;
   final bool allowCreate;
   final bool allowDelete;
+  final String dataType;
+  final bool supportsPhotos;
 }
 
 enum ReportFieldType {
@@ -215,6 +247,7 @@ class LocalReportEntry {
     required this.values,
     required this.syncStatus,
     required this.updatedAt,
+    this.serverUuid,
   });
 
   factory LocalReportEntry.fromStored({
@@ -223,6 +256,7 @@ class LocalReportEntry {
     required String payloadJson,
     required String syncStatus,
     required DateTime updatedAt,
+    String? serverUuid,
   }) {
     final payload = jsonDecode(payloadJson) as Map<String, dynamic>;
     return LocalReportEntry(
@@ -232,6 +266,7 @@ class LocalReportEntry {
       values: Map<String, dynamic>.from(payload['values'] as Map? ?? const {}),
       syncStatus: syncStatus,
       updatedAt: updatedAt,
+      serverUuid: serverUuid,
     );
   }
 
@@ -241,4 +276,5 @@ class LocalReportEntry {
   final Map<String, dynamic> values;
   final String syncStatus;
   final DateTime updatedAt;
+  final String? serverUuid;
 }

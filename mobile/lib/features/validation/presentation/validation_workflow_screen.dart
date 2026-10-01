@@ -191,6 +191,26 @@ class _ValidationWorkflowScreenState
   }
 
   Future<void> _submit() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Submit this report?'),
+        content: const Text(
+          'TNK Insight will validate the report again. After submission, some fields may no longer be editable.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Submit report'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
     setState(() {
       _busy = true;
       _safeError = null;

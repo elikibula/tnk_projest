@@ -7,6 +7,9 @@ class AuthUser {
     required this.fullName,
     required this.preferredLanguage,
     required this.roles,
+    this.locationAssignments = const [],
+    this.capabilities = const {},
+    this.email = '',
   });
 
   factory AuthUser.fromJson(Map<String, dynamic> json) => AuthUser(
@@ -17,6 +20,17 @@ class AuthUser {
     roles: List<String>.unmodifiable(
       (json['roles'] as List<dynamic>? ?? const []).cast<String>(),
     ),
+    email: json['email'] as String? ?? '',
+    locationAssignments: List<Map<String, dynamic>>.unmodifiable(
+      (json['location_assignments'] as List<dynamic>? ?? const []).map(
+        (value) => Map<String, dynamic>.from(value as Map),
+      ),
+    ),
+    capabilities: Map<String, bool>.unmodifiable(
+      (json['capabilities'] as Map? ?? const {}).map(
+        (key, value) => MapEntry(key.toString(), value == true),
+      ),
+    ),
   );
 
   final String uuid;
@@ -24,6 +38,10 @@ class AuthUser {
   final String fullName;
   final String preferredLanguage;
   final List<String> roles;
+  final String email;
+  final List<Map<String, dynamic>> locationAssignments;
+  final Map<String, bool> capabilities;
+  bool can(String capability) => capabilities[capability] == true;
 
   Map<String, dynamic> toJson() => {
     'uuid': uuid,
@@ -31,6 +49,9 @@ class AuthUser {
     'full_name': fullName,
     'preferred_language': preferredLanguage,
     'roles': roles,
+    'email': email,
+    'location_assignments': locationAssignments,
+    'capabilities': capabilities,
   };
 }
 

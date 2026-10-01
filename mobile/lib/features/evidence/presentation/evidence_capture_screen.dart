@@ -16,10 +16,16 @@ class EvidenceCaptureScreen extends ConsumerStatefulWidget {
     required this.reportLocalUuid,
     required this.editable,
     super.key,
+    this.sectionCode,
+    this.entryKey,
+    this.recordIdentifier,
   });
   final AuthSession session;
   final String reportLocalUuid;
   final bool editable;
+  final String? sectionCode;
+  final String? entryKey;
+  final String? recordIdentifier;
 
   @override
   ConsumerState<EvidenceCaptureScreen> createState() =>
@@ -34,6 +40,8 @@ class _EvidenceCaptureScreenState extends ConsumerState<EvidenceCaptureScreen> {
   bool _compress = true;
   EvidenceLocation? _location;
   bool _busy = false;
+  String _stage = 'observation';
+  DateTime? _capturedAt;
 
   @override
   void dispose() {
@@ -70,6 +78,25 @@ class _EvidenceCaptureScreenState extends ConsumerState<EvidenceCaptureScreen> {
           ),
         ),
         const SizedBox(height: 16),
+        if (widget.recordIdentifier != null) ...[
+          DropdownButtonFormField<String>(
+            initialValue: _stage,
+            decoration: const InputDecoration(labelText: 'Photo stage'),
+            items: const [
+              DropdownMenuItem(
+                value: 'observation',
+                child: Text('Observation'),
+              ),
+              DropdownMenuItem(value: 'before', child: Text('Before')),
+              DropdownMenuItem(value: 'progress', child: Text('Progress')),
+              DropdownMenuItem(value: 'after', child: Text('After')),
+            ],
+            onChanged: widget.editable
+                ? (value) => setState(() => _stage = value!)
+                : null,
+          ),
+          const SizedBox(height: 12),
+        ],
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -149,6 +176,7 @@ class _EvidenceCaptureScreenState extends ConsumerState<EvidenceCaptureScreen> {
         _file = File(picked.path);
         _mediaType = picked.mimeType ?? 'image/jpeg';
         _compress = true;
+        _capturedAt = DateTime.now();
       });
     }
   }
@@ -228,6 +256,11 @@ class _EvidenceCaptureScreenState extends ConsumerState<EvidenceCaptureScreen> {
           documentType: _mediaType.startsWith('image/') ? 'photo' : 'document',
           description: _description.text.trim(),
           location: _location,
+          capturedAt: _capturedAt,
+          sectionCode: widget.sectionCode,
+          entryKey: widget.entryKey,
+          recordIdentifier: widget.recordIdentifier,
+          stage: widget.recordIdentifier == null ? null : _stage,
         ),
       );
       if (mounted) {

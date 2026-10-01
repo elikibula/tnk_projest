@@ -11,6 +11,10 @@ import '../../reporting/domain/reporting_models.dart';
 import '../../reporting/presentation/report_list_screen.dart';
 import '../../reporting/presentation/report_section_screen.dart';
 import '../../validation/presentation/validation_workflow_screen.dart';
+import '../../exploration/presentation/analytics_screen.dart';
+import '../../exploration/presentation/location_directory_screen.dart';
+import '../../exploration/presentation/profile_screen.dart';
+import '../../exploration/presentation/photo_reports_screen.dart';
 import '../data/dashboard_providers.dart';
 import '../domain/dashboard_models.dart';
 
@@ -156,6 +160,49 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             value.indicators.isEmpty
                 ? null
                 : () => showIndicators(value.indicators),
+          ),
+          if (widget.session.user.can('analytics'))
+            action(
+              'Analytics',
+              Icons.analytics_outlined,
+              () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) => const AnalyticsScreen(),
+                ),
+              ),
+            ),
+          if (widget.session.user.can('locations'))
+            action(
+              'Location directory',
+              Icons.account_tree_outlined,
+              () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) => const LocationDirectoryScreen(),
+                ),
+              ),
+            ),
+          if (widget.session.user.can('photo_reports'))
+            action(
+              'Photo Reports',
+              Icons.photo_library_outlined,
+              () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) => const PhotoReportsScreen(),
+                ),
+              ),
+            ),
+          action(
+            'Profile',
+            Icons.person_outline,
+            () => Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (_) => ProfileScreen(session: widget.session),
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).push(
@@ -312,6 +359,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     if (!mounted || villages.isEmpty || periods.isEmpty) return;
     var village = villages.first.uuid;
     var period = periods.first.uuid;
+    var province = villages.first.provinceUuid;
+    var tikina = villages.first.tikinaUuid;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -321,9 +370,62 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
+                initialValue: province,
+                decoration: const InputDecoration(labelText: 'Province'),
+                items:
+                    {
+                          for (final item in villages)
+                            item.provinceUuid: item.province,
+                        }.entries
+                        .map(
+                          (item) => DropdownMenuItem(
+                            value: item.key,
+                            child: Text(item.value),
+                          ),
+                        )
+                        .toList(),
+                onChanged: (value) => update(() {
+                  province = value!;
+                  final selected = villages.firstWhere(
+                    (item) => item.provinceUuid == province,
+                  );
+                  tikina = selected.tikinaUuid;
+                  village = selected.uuid;
+                }),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                key: ValueKey(province),
+                initialValue: tikina,
+                decoration: const InputDecoration(labelText: 'Tikina'),
+                items:
+                    {
+                          for (final item in villages.where(
+                            (item) => item.provinceUuid == province,
+                          ))
+                            item.tikinaUuid: item.tikina,
+                        }.entries
+                        .map(
+                          (item) => DropdownMenuItem(
+                            value: item.key,
+                            child: Text(item.value),
+                          ),
+                        )
+                        .toList(),
+                onChanged: (value) => update(() {
+                  tikina = value!;
+                  village = villages
+                      .firstWhere((item) => item.tikinaUuid == tikina)
+                      .uuid;
+                }),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                key: ValueKey(tikina),
                 initialValue: village,
                 decoration: const InputDecoration(labelText: 'Village'),
                 items: villages
+                    .where((item) => item.tikinaUuid == tikina)
                     .map(
                       (item) => DropdownMenuItem(
                         value: item.uuid,

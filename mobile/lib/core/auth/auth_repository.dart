@@ -18,8 +18,19 @@ class AuthRepository {
   final InstallationIdentity _identity;
   final Duration _offlineSessionDuration;
   final DateTime Function() _clock;
+  int _generation = 0;
+
+  Future<AuthSession> refreshRejectedSession(AuthSession session) async {
+    final generation = _generation;
+    final tokens = await _remote.refresh(session.tokens);
+    if (generation != _generation) throw const SessionExpiredFailure();
+    final refreshed = session.copyWith(tokens: tokens, isOffline: false);
+    await _store.writeSession(refreshed);
+    return refreshed;
+  }
 
   Future<AuthSession> login(String username, String password) async {
+    _generation++;
     final result = await _remote.login(
       username: username.trim(),
       password: password,
@@ -94,6 +105,7 @@ class AuthRepository {
   }
 
   Future<void> logout(AuthSession session) async {
+    _generation++;
     try {
       await _remote.logout(session.tokens);
     } on AuthFailure {
@@ -103,5 +115,8 @@ class AuthRepository {
     }
   }
 
-  Future<void> clearLocalSession() => _store.clearSession();
+  Future<void> clearLocalSession() {
+    _generation++;
+    return _store.clearSession();
+  }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../api/api_client.dart';
 import '../auth/auth_failures.dart';
 import '../auth/auth_providers.dart';
 import '../database/database_providers.dart';
@@ -9,7 +8,7 @@ import 'bootstrap_remote_data_source.dart';
 import 'bootstrap_repository.dart';
 
 final bootstrapRemoteDataSourceProvider = Provider<BootstrapRemoteDataSource>(
-  (ref) => DioBootstrapRemoteDataSource(ref.watch(dioProvider)),
+  (ref) => DioBootstrapRemoteDataSource(ref.watch(authenticatedDioProvider)),
 );
 
 final bootstrapRepositoryProvider = FutureProvider<BootstrapRepository>((
