@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.contrib.contenttypes.models import ContentType
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -15,7 +16,7 @@ from drf_spectacular.generators import SchemaGenerator
 from apps.accounts.models import Role, User, UserLocationAssignment, UserRoleAssignment
 from apps.locations.models import Province, Tikina, Village
 from apps.mobile_api.models import MobileDevice
-from apps.documents.models import EvidenceDocument
+from apps.documents.models import EvidenceDocument, EvidenceLink
 from apps.analytics.models import IndicatorDefinition, IndicatorValue
 from apps.population.models import AgeGroup, PopulationSnapshot
 from apps.reporting.models import ReportingPeriod, ReportSectionStatus, TNKReport
@@ -595,3 +596,125 @@ class MobileApiTests(APITestCase):
         self.login()
         response = self.client.get(reverse("mobile_api:dashboard"), {"report_uuid": report.uuid})
         self.assertEqual(response.status_code, 404)
+
+    def test_location_directory_is_paginated_and_assignment_scoped(self):
+        self.login()
+
+        villages = self.client.get(
+            reverse("mobile_api:location-directory"),
+            {"level": "village", "page_size": 100},
+        )
+
+        self.assertEqual(villages.status_code, 200, villages.data)
+        self.assertEqual(villages.data["count"], 1)
+        self.assertEqual(villages.data["results"][0]["uuid"], str(self.village.uuid))
+        self.assertNotIn(
+            str(self.other_village.uuid),
+            {item["uuid"] for item in villages.data["results"]},
+        )
+
+    def test_analytics_uses_authorised_scope_and_rejects_national_access(self):
+        self.login()
+
+        response = self.client.get(
+            reverse("mobile_api:analytics"),
+            {"level": "province", "location": self.province.uuid},
+        )
+        national = self.client.get(
+            reverse("mobile_api:analytics"),
+            {"level": "national"},
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["scope"]["uuid"], str(self.province.uuid))
+        self.assertIn("summary", response.data)
+        self.assertIn("insights", response.data)
+        self.assertEqual(national.status_code, 403)
+
+    def test_report_list_filters_and_exposes_mobile_display_metadata(self):
+        matching = create_report(
+            village=self.village,
+            reporting_period=self.period,
+            prepared_by=self.user,
+        )
+        create_report(
+            village=self.other_village,
+            reporting_period=self.period,
+            prepared_by=self.other_user,
+        )
+        self.login()
+
+        response = self.client.get(
+            reverse("mobile_api:reports"),
+            {"status": TNKReport.Status.DRAFT, "q": "Village A1", "page_size": 10},
+        )
+        me = self.client.get(reverse("mobile_api:me"))
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["count"], 1)
+        result = response.data["results"][0]
+        self.assertEqual(result["uuid"], str(matching.uuid))
+        self.assertEqual(result["village_name"], "Village A1")
+        self.assertEqual(result["province_name"], "Test Province")
+        self.assertTrue(result["can_edit"])
+        self.assertIn("analytics", me.data["capabilities"])
+
+    def test_bootstrap_exposes_card_data_types_and_photo_support(self):
+        self.login()
+
+        response = self.client.get(reverse("mobile_api:bootstrap"))
+
+        self.assertEqual(response.status_code, 200, response.data)
+        entries = [entry for section in response.data["section_definitions"] for entry in section["entry_types"]]
+        self.assertTrue(entries)
+        self.assertTrue(all(entry["data_type"] in {"master", "operational", "snapshot", "workflow"} for entry in entries))
+        self.assertTrue(any(entry["supports_photos"] for entry in entries))
+
+    def test_photo_reports_api_is_senior_only_and_scoped(self):
+        own = create_report(village=self.village, reporting_period=self.period, prepared_by=self.user)
+        create_report(village=self.other_village, reporting_period=self.period, prepared_by=self.other_user)
+        self.login()
+        denied = self.client.get(reverse("mobile_api:photo-reports"))
+        self.assertEqual(denied.status_code, 403)
+
+        senior = Role.objects.create(code=Role.Codes.ROKO_VEIVUKE, name="Roko Tui Veivuke")
+        UserRoleAssignment.objects.create(user=self.user, role=senior)
+        allowed = self.client.get(reverse("mobile_api:photo-reports"), {"page_size": 100})
+        me = self.client.get(reverse("mobile_api:me"))
+
+        self.assertEqual(allowed.status_code, 200, allowed.data)
+        self.assertEqual(allowed.data["count"], 1)
+        self.assertEqual(allowed.data["results"][0]["uuid"], str(own.uuid))
+        self.assertTrue(me.data["capabilities"]["photo_reports"])
+
+    @override_settings(STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
+    def test_photo_report_gallery_returns_only_protected_images_and_downloads_privately(self):
+        report = create_report(village=self.village, reporting_period=self.period, prepared_by=self.user)
+        senior = Role.objects.create(code=Role.Codes.ROKO_VEIVUKE, name="Roko Tui Veivuke")
+        UserRoleAssignment.objects.create(user=self.user, role=senior)
+        document = EvidenceDocument.objects.create(
+            title="Village water photo",
+            document_type="photograph",
+            file=SimpleUploadedFile("water.png", b"not-a-real-png", content_type="image/png"),
+            original_filename="water.png",
+            file_size=14,
+            mime_type="image/png",
+            checksum="0" * 64,
+            uploaded_by=self.user,
+        )
+        EvidenceLink.objects.create(
+            document=document,
+            content_type=ContentType.objects.get_for_model(report),
+            object_id=report.pk,
+        )
+        self.login()
+
+        gallery = self.client.get(reverse("mobile_api:photo-report-detail", args=(report.uuid,)), {"page_size": 100})
+        image = self.client.get(reverse("mobile_api:photo-report-image", args=(document.uuid,)))
+
+        self.assertEqual(gallery.status_code, 200, gallery.data)
+        self.assertEqual(gallery.data["total_photos"], 1)
+        self.assertEqual(gallery.data["results"][0]["stage"], "unspecified")
+        self.assertEqual(gallery.data["results"][0]["area"], "general")
+        self.assertEqual(image.status_code, 200)
+        self.assertEqual(image["Cache-Control"], "private, no-store")

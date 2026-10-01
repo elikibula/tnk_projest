@@ -23,7 +23,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from apps.accounts.selectors import villages_for_user
 from apps.core.security.confidentiality import permitted_section_codes, role_codes_for_user
-from apps.reporting.models import ReportingPeriod, ReportSectionStatus
+from apps.reporting.models import ReportingPeriod, ReportSectionStatus, TNKReport
 from apps.reporting.section_registry import SECTION_ENTRIES
 from apps.reporting.selectors import reports_for_user
 from apps.reporting.progress import recalculate_report_progress
@@ -31,9 +31,11 @@ from apps.workflow.services import available_actions
 from apps.workflow.models import FinalDeclaration
 from apps.workflow.services import transition_report
 from apps.data_quality.services import validate_report
-from apps.accounts.permissions import REPORT_AUTHOR_ROLE_CODES, user_has_any_role
+from apps.accounts.permissions import PHOTO_REPORT_ROLE_CODES, REPORT_AUTHOR_ROLE_CODES, user_has_any_role
+from apps.accounts.models import Role
 from apps.audit.services import record_event
-from apps.documents.models import EvidenceDocument, EvidenceLink
+from apps.documents.models import EvidenceDocument, EvidenceLink, RecordPhoto
+from apps.documents.photos import photo_context
 from apps.core.security import can_view_analytics, can_view_document
 from apps.analytics.models import IndicatorValue
 from apps.reporting.amendments import apply_indicator_overrides
@@ -51,6 +53,7 @@ from .serializers import (
     VillageSerializer,
 )
 from .versioning import app_version_policy
+from .exploration import OptionalMobilePage
 
 
 logger = logging.getLogger("tnk.mobile_api")
@@ -62,6 +65,15 @@ def user_payload(user):
         "uuid": user.uuid,
         "username": user.username,
         "full_name": user.get_full_name(),
+        "email": user.email,
+        "capabilities": {
+            "create_report": user_has_any_role(user, REPORT_AUTHOR_ROLE_CODES),
+            "analytics": can_view_analytics(user),
+            "national_analytics": user.is_superuser or user_has_any_role(user, {Role.Codes.SYSTEM_ADMIN}),
+            "administration": user_has_any_role(user, {Role.Codes.SYSTEM_ADMIN, Role.Codes.PROVINCIAL_ADMIN}),
+            "locations": True,
+            "photo_reports": user_has_any_role(user, PHOTO_REPORT_ROLE_CODES),
+        },
         "preferred_language": user.preferred_language,
         "roles": sorted(role_codes_for_user(user)),
         "location_assignments": LocationAssignmentSerializer(assignments, many=True).data,
@@ -180,6 +192,7 @@ class MeView(APIView):
 
 class VillageListView(generics.ListAPIView):
     serializer_class = VillageSerializer
+    pagination_class = OptionalMobilePage
 
     def get_queryset(self):
         return villages_for_user(self.request.user).filter(is_active=True, tikina__is_active=True, tikina__province__is_active=True).select_related("tikina__province")
@@ -189,12 +202,28 @@ class ReportingPeriodListView(generics.ListAPIView):
     serializer_class = ReportingPeriodSerializer
 
     def get_queryset(self):
+        if self.request.query_params.get("include_closed") == "true":
+            return ReportingPeriod.objects.order_by("-year", "-quarter")
         return ReportingPeriod.objects.filter(is_open=True, is_locked=False)
 
 
 class ReportListCreateView(generics.ListCreateAPIView):
+    pagination_class = OptionalMobilePage
+
     def get_queryset(self):
-        return reports_for_user(self.request.user).select_related("village", "reporting_period", "previous_report").prefetch_related("section_statuses")
+        rows = reports_for_user(self.request.user).select_related("village__tikina__province", "reporting_period", "previous_report").prefetch_related("section_statuses", "approval_actions")
+        filters = serializers.Serializer(data=self.request.query_params)
+        filters.fields["period"] = serializers.UUIDField(required=False)
+        filters.fields["village"] = serializers.UUIDField(required=False)
+        filters.fields["status"] = serializers.ChoiceField(choices=TNKReport.Status.choices, required=False)
+        filters.fields["q"] = serializers.CharField(required=False, max_length=120, allow_blank=True)
+        filters.is_valid(raise_exception=True)
+        for field, lookup in (("period", "reporting_period__uuid"), ("village", "village__uuid"), ("status", "status")):
+            if filters.validated_data.get(field):
+                rows = rows.filter(**{lookup: filters.validated_data[field]})
+        if filters.validated_data.get("q"):
+            rows = rows.filter(village__name_en__icontains=filters.validated_data["q"])
+        return rows
 
     def get_serializer_class(self):
         return ReportCreateSerializer if self.request.method == "POST" else ReportSerializer
@@ -203,7 +232,7 @@ class ReportListCreateView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         report = serializer.save()
-        return Response(ReportSerializer(report).data, status=status.HTTP_201_CREATED)
+        return Response(ReportSerializer(report, context={"request": request}).data, status=status.HTTP_201_CREATED)
 
 
 class ReportDetailView(generics.RetrieveAPIView):
@@ -239,6 +268,8 @@ class BootstrapView(APIView):
                         "field_definitions": [mobile_field_definition(entry.model, field) for field in entry.fields],
                         "allow_create": entry.allow_create,
                         "allow_delete": entry.allow_delete,
+                        "data_type": entry.data_type,
+                        "supports_photos": entry.supports_photos,
                     }
                     for entry in SECTION_ENTRIES.get(code, ())
                 ],
@@ -261,8 +292,8 @@ class BootstrapView(APIView):
                 "version_policy": app_version_policy(device.app_version),
             },
             "villages": VillageSerializer(villages, many=True).data,
-            "reporting_periods": ReportingPeriodSerializer(ReportingPeriod.objects.filter(is_open=True, is_locked=False), many=True).data,
-            "reports": ReportSerializer(reports, many=True).data,
+            "reporting_periods": ReportingPeriodSerializer(ReportingPeriod.objects.filter(models.Q(is_open=True, is_locked=False) | models.Q(pk__in=reports.values("reporting_period_id"))).order_by("-year", "-quarter"), many=True).data,
+            "reports": ReportSerializer(reports, many=True, context={"request": request}).data,
             "section_definitions": section_definitions,
             "workflow_capabilities": {str(report.uuid): available_actions(report, user) for report in reports},
         })
@@ -368,6 +399,7 @@ class ReportEvidenceView(APIView):
                 {key: request.data.get(key, "") for key in (
                     "title", "document_type", "description", "confidentiality_level",
                     "captured_at", "latitude", "longitude", "location_accuracy_metres",
+                    "section_code", "entry_key", "record_identifier", "stage",
                 )},
                 sort_keys=True,
                 separators=(",", ":"),
@@ -379,6 +411,18 @@ class ReportEvidenceView(APIView):
             if replay.endpoint != "reports/evidence" or replay.request_hash != request_fingerprint:
                 return Response({"code": "idempotency_mismatch", "detail": "That idempotency key was used for another request."}, status=409)
             return Response(replay.response_body, status=replay.response_status)
+        target = None
+        target_values = [request.data.get(name) for name in ("section_code", "entry_key", "record_identifier")]
+        if any(target_values):
+            if not all(target_values):
+                return Response({"code": "validation_error", "detail": "section_code, entry_key and record_identifier are required together."}, status=400)
+            stage = request.data.get("stage", "observation")
+            if stage not in dict(RecordPhoto.STAGES):
+                return Response({"code": "validation_error", "detail": "Select a valid photo stage."}, status=400)
+            target = photo_context(
+                request.user, report.uuid, request.data["section_code"], request.data["entry_key"],
+                request.data["record_identifier"], editing=True,
+            )
         document = EvidenceDocument(
             uuid=key,
             title=request.data.get("title", ""),
@@ -402,6 +446,12 @@ class ReportEvidenceView(APIView):
         except ValidationError as error:
             return Response({"code": "validation_error", "errors": error.message_dict}, status=400)
         EvidenceLink.objects.create(document=document, content_type=ContentType.objects.get_for_model(report), object_id=report.pk)
+        if target:
+            _, config, identifier, _ = target
+            RecordPhoto.objects.create(
+                document=document, report=report, section_code=request.data["section_code"],
+                entry_key=config.key, record_identifier=identifier, stage=request.data.get("stage", "observation"),
+            )
         payload = evidence_payload(document)
         ApiIdempotencyRecord.objects.create(
             user=request.user, device=device, key=key, endpoint="reports/evidence",

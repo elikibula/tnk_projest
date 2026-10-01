@@ -129,6 +129,14 @@ class ReportSectionSerializer(serializers.ModelSerializer):
 
 
 class ReportSerializer(serializers.ModelSerializer):
+    village_name = serializers.CharField(source="village.name_en", read_only=True)
+    tikina_name = serializers.CharField(source="village.tikina.name_en", read_only=True)
+    province_name = serializers.CharField(source="village.tikina.province.name_en", read_only=True)
+    period_label = serializers.SerializerMethodField()
+    status_label = serializers.CharField(source="get_status_display", read_only=True)
+    is_editable = serializers.BooleanField(read_only=True)
+    can_edit = serializers.SerializerMethodField()
+    workflow_history = serializers.SerializerMethodField()
     village_uuid = serializers.UUIDField(source="village.uuid", read_only=True)
     reporting_period_uuid = serializers.UUIDField(source="reporting_period.uuid", read_only=True)
     previous_report_uuid = serializers.UUIDField(source="previous_report.uuid", read_only=True, allow_null=True)
@@ -138,7 +146,18 @@ class ReportSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TNKReport
-        fields = ("uuid", "village_uuid", "reporting_period_uuid", "previous_report_uuid", "status", "completeness_percentage", "data_quality_score", "overall_risk_level", "record_version", "created_at", "updated_at", "sections", "workflow_actions", "returned_review")
+        fields = ("uuid", "village_uuid", "reporting_period_uuid", "previous_report_uuid", "status", "completeness_percentage", "data_quality_score", "overall_risk_level", "record_version", "created_at", "updated_at", "sections", "workflow_actions", "returned_review", "village_name", "tikina_name", "province_name", "period_label", "status_label", "is_editable", "can_edit", "workflow_history", "submitted_at")
+
+    def get_can_edit(self, obj):
+        request = self.context.get("request")
+        return bool(request and obj.is_editable and user_has_any_role(request.user, REPORT_AUTHOR_ROLE_CODES))
+
+    def get_period_label(self, obj):
+        return str(obj.reporting_period)
+
+    def get_workflow_history(self, obj):
+        return [{"action": action.action_type, "status": action.to_status, "reviewer": action.user_full_name,
+                 "comment": action.comment, "acted_at": action.acted_at} for action in obj.approval_actions.all()]
 
     def get_workflow_actions(self, obj):
         request = self.context.get("request")
@@ -172,6 +191,8 @@ class ReportCreateSerializer(serializers.Serializer):
             attrs["reporting_period"] = ReportingPeriod.objects.get(uuid=attrs.pop("reporting_period_uuid"))
         except (Village.DoesNotExist, ReportingPeriod.DoesNotExist):
             raise serializers.ValidationError({"resource": "Village or reporting period was not found."}) from None
+        if not attrs["village"].is_active or not attrs["village"].tikina.is_active or not attrs["village"].tikina.province.is_active:
+            raise serializers.ValidationError({"village_uuid": "Reports cannot be created for an inactive location."})
         return attrs
 
     def create(self, validated_data):

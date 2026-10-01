@@ -5,7 +5,15 @@ from .views import BootstrapView, DashboardSummaryView, DeviceLoginView, DeviceT
 
 app_name = "mobile_api"
 
+from .exploration import AnalyticsOverviewView, LocationDirectoryView
+from .photo_reports import PhotoReportDetailView, PhotoReportImageView, PhotoReportListView
+
 urlpatterns = [
+    path("analytics/", AnalyticsOverviewView.as_view(), name="analytics"),
+    path("locations/", LocationDirectoryView.as_view(), name="location-directory"),
+    path("photo-reports/", PhotoReportListView.as_view(), name="photo-reports"),
+    path("photo-reports/<uuid:report_uuid>/", PhotoReportDetailView.as_view(), name="photo-report-detail"),
+    path("photo-reports/images/<uuid:document_uuid>/", PhotoReportImageView.as_view(), name="photo-report-image"),
     path("auth/login/", DeviceLoginView.as_view(), name="login"),
     path("auth/refresh/", DeviceTokenRefreshView.as_view(), name="refresh"),
     path("auth/logout/", LogoutView.as_view(), name="logout"),
